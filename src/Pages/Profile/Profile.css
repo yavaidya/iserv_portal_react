@@ -1,0 +1,176 @@
+.profile-container {
+	padding: 24px;
+	padding-top: 0 !important;
+	max-width: 90vw;
+	width: 100%;
+	margin: auto;
+	margin-top: 5px;
+}
+
+.profile-title {
+	margin-bottom: 16px;
+	text-align: center;
+}
+
+.profile-tabs {
+	margin-bottom: 15px;
+	border-bottom: 1px solid #eee;
+}
+
+.tab-content {
+	margin-top: 16px;
+}
+
+.info-section,
+.update-password-section,
+.manage-users-section,
+.manage-sites-section {
+	padding: 16px;
+}
+
+.profile-img-form-section {
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-start;
+	align-items: center;
+	gap: 30px;
+}
+
+.update-password-section {
+	width: 80%;
+}
+
+.form-section {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: 100%;
+}
+
+.img-section {
+	width: 20%;
+}
+
+.form-group {
+	display: flex;
+	gap: 16px;
+}
+
+.form-input {
+	flex: 1;
+}
+
+.edit-button {
+	margin-left: 8px;
+}
+
+.update-button {
+	margin-top: 16px;
+}
+
+.manage-users-section {
+	display: flex;
+	flex-direction: column;
+}
+
+.user-edit-form {
+	margin-top: 20px;
+	padding: 40px;
+	border: 1px solid #ddd;
+	border-radius: 5px;
+}
+
+.edit-user-form {
+	display: flex;
+	flex-direction: column;
+	gap: 30px;
+}
+
+.user-details-section {
+	width: 100%;
+}
+
+.user-customer-section {
+	width: 100%;
+	display: flex;
+	justify-content: center;
+}
+
+.button-container {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+	gap: 10px;
+	margin-top: 30px;
+}
+
+/* Responsive Styles */
+
+/* For screens smaller than 992px */
+@media screen and (max-width: 992px) {
+	.profile-container {
+		max-width: 90vw;
+		padding: 16px;
+	}
+
+	.profile-img-form-section {
+		gap: 20px;
+	}
+
+	.form-section {
+		width: 100%;
+	}
+
+	.img-section {
+		width: 40%;
+	}
+
+	.user-details-section,
+	.user-customer-section {
+		width: 100%;
+	}
+}
+
+/* For screens smaller than 768px */
+@media screen and (max-width: 768px) {
+	.profile-img-form-section {
+		flex-direction: column;
+		align-items: center;
+	}
+
+	.img-section {
+		width: 60%;
+	}
+
+	.form-group {
+		flex-direction: column;
+		gap: 12px;
+	}
+
+	.update-button {
+		width: 100%;
+	}
+
+	.edit-user-form {
+		display: flex;
+		flex-direction: column;
+		gap: 30px;
+	}
+}
+
+/* For screens smaller than 480px */
+@media screen and (max-width: 480px) {
+	.profile-title {
+		font-size: 18px;
+	}
+
+	.profile-img-form-section {
+		gap: 15px;
+	}
+
+	.update-button {
+		padding: 10px;
+		font-size: 14px;
+	}
+}
