@@ -2,12 +2,12 @@ import customHttp from "./customHTTP";
 
 const loginService = async (data) => {
 	try {
-		const response = await customHttp.post("/dual_login.php", data);
+		const response = await customHttp.post("/auth/login", data);
 		console.log(response.data);
 		return response.data;
 	} catch (error) {
 		console.log(error);
-		return error.response;
+		return error.response.data;
 	}
 };
 

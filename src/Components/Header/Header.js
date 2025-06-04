@@ -10,7 +10,7 @@ const Header = () => {
 				...flexRow,
 				width: "100%",
 				zIndex: 1052,
-				height: "7%",
+				height: "75px",
 				px: 2,
 				background: (theme) => theme.palette.background.paper,
 				boxShadow: "2px 4px 5px 0px rgba(0,0,0,0.1)",

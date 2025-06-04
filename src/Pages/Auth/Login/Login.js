@@ -26,8 +26,8 @@ const Login = () => {
 	const { flexCol, flexRow } = useCustomTheme();
 	const navigate = useNavigate();
 	const [formData, setFormData] = useState({
-		username: "",
-		password: "",
+		email: "",
+		user_password: "",
 	});
 	const [loginLoading, setLoginLoading] = useState(false);
 	const [error, setError] = useState(null);
@@ -47,13 +47,13 @@ const Login = () => {
 	const handleLogin = async () => {
 		setError(null); // Reset error
 		setLoginLoading(true);
-		if (!formData.username || !formData.password) {
+		if (!formData.email || !formData.user_password) {
 			setError("Please enter both email and password.");
 			setLoginLoading(false);
 			return;
 		}
 
-		const req_body = { ...formData, serviceEngineer: seLogin };
+		const req_body = { ...formData, mode: seLogin ? "agent" : "user" };
 		const response = await authLogin(setLoginLoading, setError, req_body);
 		console.log(response.status ? "Login success!" : "Login Failed!");
 	};
@@ -65,8 +65,8 @@ const Login = () => {
 		setSeLogin((prev) => !prev);
 		setError(null);
 		setFormData({
-			username: "",
-			password: "",
+			email: "",
+			user_password: "",
 		});
 	};
 
@@ -137,29 +137,34 @@ const Login = () => {
 							alignItems: "center",
 						}}>
 						{error && (
-							<Alert severity="error" color="error" variant="filled" sx={{ width: "100%", mb: 2 }}>
+							<Alert severity="error" sx={{ width: "100%", mb: 2 }}>
 								{error}
 							</Alert>
 						)}
 						<TextField
 							label="Email / Username"
 							type="text"
-							name="username"
+							name="email"
 							fullWidth
 							size="small"
 							variant="outlined"
-							value={formData.username}
+							value={formData.email}
 							onChange={handleFieldChange}
 						/>
 						<TextField
 							label="Password"
 							type="password"
-							name="password"
+							name="user_password"
 							size="small"
 							fullWidth
 							variant="outlined"
-							value={formData.password}
+							value={formData.user_password}
 							onChange={handleFieldChange}
+							onKeyDown={(e) => {
+								if (e.key === "Enter") {
+									handleLogin();
+								}
+							}}
 						/>
 						<Box width="100%" textAlign="right">
 							<Link

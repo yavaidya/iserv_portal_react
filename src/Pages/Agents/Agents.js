@@ -1,28 +1,26 @@
 import React, { useEffect, useState } from "react";
 import { usePageTitle } from "../../Context/PageTitleContext";
 import { Alert, Box, CircularProgress, Tooltip } from "@mui/material";
-import { fetchCustomersService } from "../../Services/customerService";
+import { fetchAgentsService } from "../../Services/agentService";
 import CustomDatagrid from "../../Components/CustomDatagrid/CustomDatagrid";
 import { error } from "jodit/esm/core/helpers";
 import { useCustomTheme } from "../../Context/ThemeContext";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import DeleteIcon from "@mui/icons-material/Delete";
-
-
-
-const Customer = () => {
+import moment from "moment";
+const Agents = () => {
 	const { setActiveTitle } = usePageTitle();
 	const { flexCol, flexRow } = useCustomTheme();
-	const [customers, setCustomers] = useState([]);
+	const [agents, setAgents] = useState([]);
 	const [error, setError] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const columns = [
 		{
 			field: "name",
-			headerName: "Customer Name",
+			headerName: "Name",
 			flex: 1,
 			renderCell: (params) => (
-				<Tooltip title="View Customer Details">
+				<Tooltip title="View Agent Details">
 					<span
 						style={{
 							cursor: "pointer",
@@ -36,76 +34,80 @@ const Customer = () => {
 			),
 		},
 		{
-			field: "manager",
-			headerName: "Manager",
-			width: 150,
+			field: "email",
+			headerName: "Email",
+			width: 200,
 			align: "center",
 			headerAlign: "center",
 			renderCell: (params) =>
 				params.value === "" || !params.value ? (
-					<span style={{ fontSize: "10px", color: "gray" }}>No Manager Assigned</span>
+					<span style={{ fontSize: "10px", color: "gray" }}>N/A</span>
 				) : (
 					params.value
 				),
 		},
 		{
-			field: "sites",
-			headerName: "Sites",
+			field: "username",
+			headerName: "Username",
+			width: 150,
+			align: "center",
+			headerAlign: "center",
+			renderCell: (params) =>
+				params.value === "" || !params.value ? (
+					<span style={{ fontSize: "10px", color: "gray" }}>N/A</span>
+				) : (
+					params.value
+				),
+		},
+		{
+			field: "is_service_manager",
+			headerName: "Role",
+			width: 150,
+			align: "center",
+			headerAlign: "center",
+			renderCell: (params) => (params.value ? <span>Service Manager</span> : <span>Service Engineer</span>),
+		},
+		{
+			field: "billing_profile",
+			headerName: "Billing Profile",
+			width: 150,
+			align: "center",
+			headerAlign: "center",
+			renderCell: (params) =>
+				params.value === "" ? (
+					<span style={{ fontSize: "10px", color: "gray", fontStyle: "italic" }}>N/A</span>
+				) : (
+					params.value
+				),
+		},
+		{
+			field: "status",
+			headerName: "Status",
 			width: 100,
 			align: "center",
 			headerAlign: "center",
-			renderCell: (params) => {
-				let statusText = "";
-				if (params.value === 0 || params.value === "0") {
-					statusText = `<span style="font-size: 11px; color: #aaa;">No Sites Available</span>`;
-				} else {
-					statusText = `<b>${params.value}</b> <span style="font-size: 11px;">${
-						params.value > 1 ? "Sites" : "Site"
-					}</span>`;
-				}
-				return <span dangerouslySetInnerHTML={{ __html: statusText }} />;
-			},
+			renderCell: (params) => (params.value ? <span>Active</span> : <span>Inactive</span>),
 		},
 		{
-			field: "equipments",
-			headerName: "Provisioned Equipments",
-			width: 200,
+			field: "last_login",
+			headerName: "Last Login",
+			width: 175,
 			align: "center",
 			headerAlign: "center",
-			renderCell: (params) => {
-				let statusText = "";
-				if (params.value === 0 || params.value === "0") {
-					statusText = `<span style="font-size: 11px; color: #aaa;">No Equipments</span>`;
-				} else {
-					statusText = `<b>${params.value}</b> <span style="font-size: 11px;">${
-						params.value > 1 ? "Equipments" : "Equipment"
-					}</span>`;
-				}
-				return <span dangerouslySetInnerHTML={{ __html: statusText }} />;
-			},
+			renderCell: (params) =>
+				params.value === "" ? (
+					<span style={{ fontSize: "10px", color: "gray", fontStyle: "italic" }}>Never</span>
+				) : (
+					<span style={{ fontSize: "11px", fontStyle: "italic", color: "gray" }}>
+						{moment(params.value).fromNow()}
+					</span>
+				),
 		},
-		{
-			field: "userCount",
-			headerName: "Users",
-			width: 100,
-			align: "center",
-			headerAlign: "center",
-			renderCell: (params) => {
-				let statusText = "";
-				if (params.value === 0 || params.value === "0") {
-					statusText = `<span style="font-size: 11px; color: #aaa;">N/A</span>`;
-				} else {
-					statusText = `<b>${params.value}</b> <span style="font-size: 11px;">${
-						params.value > 1 ? "Users" : "User"
-					}</span>`;
-				}
-				return <span dangerouslySetInnerHTML={{ __html: statusText }} />;
-			},
-		},
+
 		{
 			field: "created",
 			headerName: "Created",
-			width: 200,
+			width: 175,
 			align: "center",
 			headerAlign: "center",
 			renderCell: (params) => formatDate(params.value),
@@ -114,7 +116,7 @@ const Customer = () => {
 
 	const customButtons = [
 		{
-			label: "Add New Customer",
+			label: "Add New Agent",
 			icon: <AddCircleOutlineIcon />,
 			onClick: () => {
 				console.log("Adding");
@@ -130,40 +132,43 @@ const Customer = () => {
 	];
 	useEffect(() => {
 		setActiveTitle({
-			title: "Customers",
-			subtitle: "List of all the Customers",
+			title: "Agents",
+			subtitle: "List of all the Agents",
 		});
-		fetchCustomers();
+		fetchAgents();
 	}, []);
 
-	const fetchCustomers = async () => {
+	const fetchAgents = async () => {
 		setLoading(true);
 		try {
-			const response = await fetchCustomersService();
+			const response = await fetchAgentsService();
 			if (response.status) {
 				console.log(response);
 				setError(null);
-				const customerUserCounts = response.data.map((customer) => ({
-					id: customer.id,
-					name: customer.name,
-					manager: customer?.org_manager?.name || "",
-					created: customer.createdAt,
-					userCount: customer.org_users?.length || 0,
-					sites: customer.org_sites?.length || 0,
-					equipments: customer.org_equipments?.length || 0,
+				const agentUserCounts = response.data.map((agent) => ({
+					id: agent.staff_id,
+					name: agent.name,
+					billing_profile: agent?.billing_profile || "",
+					username: agent?.staff_account?.username || "",
+					status: agent?.staff_account?.status || false,
+					is_service_manager: agent?.staff_account?.isservicemanager || false,
+					last_login: agent?.staff_account?.lastlogin || "",
+					email: agent?.staff_account?.email || "",
+					created: agent.createdAt,
+					updated: agent.updatedAt,
 				}));
-				console.log(customerUserCounts);
-				setCustomers(customerUserCounts);
+				console.log(agentUserCounts);
+				setAgents(agentUserCounts);
 				setLoading(false);
 			} else {
-				setError("Failed Fetching Customers");
-				setCustomers([]);
+				setError("Failed Fetching Agents");
+				setAgents([]);
 				setLoading(false);
 			}
 		} catch (error) {
-			setError("Failed Fetching Customers");
+			setError("Failed Fetching Agents");
 			setLoading(false);
-			setCustomers([]);
+			setAgents([]);
 		}
 	};
 
@@ -208,7 +213,7 @@ const Customer = () => {
 	return (
 		<Box p={2} px={4} width={"100%"}>
 			<CustomDatagrid
-				data={customers}
+				data={agents}
 				columns={columns}
 				rowIdField="id"
 				onSelect={handleRowSelect}
@@ -223,4 +228,4 @@ const Customer = () => {
 	);
 };
 
-export default Customer;
+export default Agents;

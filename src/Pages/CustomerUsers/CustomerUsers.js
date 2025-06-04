@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { usePageTitle } from "../../Context/PageTitleContext";
-import { Alert, Box, CircularProgress } from "@mui/material";
-import { fetchCustomersService } from "../../Services/customerService";
+import { Alert, Box, CircularProgress, Tooltip } from "@mui/material";
+import { fetchCustomersService, fetchCustomerUsersService } from "../../Services/customerService";
 import CustomDatagrid from "../../Components/CustomDatagrid/CustomDatagrid";
 import { error } from "jodit/esm/core/helpers";
 import { useCustomTheme } from "../../Context/ThemeContext";
@@ -9,36 +9,83 @@ import { useCustomTheme } from "../../Context/ThemeContext";
 const CustomerUsers = () => {
 	const { setActiveTitle } = usePageTitle();
 	const { flexCol, flexRow } = useCustomTheme();
-	const [customers, setCustomers] = useState([]);
+	const [customerUsers, setCustomerUsers] = useState([]);
 	const [error, setError] = useState(null);
 	const [loading, setLoading] = useState(true);
-	const columns = [{ field: "name", headerName: "Customer Name", flex: 1 }];
+	const columns = [
+		{
+			field: "name",
+			headerName: "Name",
+			flex: 1,
+			renderCell: (params) => (
+				<Tooltip title="View User Details">
+					<span
+						style={{
+							cursor: "pointer",
+							fontWeight: "bold",
+						}}
+						onMouseEnter={(e) => (e.target.style.fontWeight = "bold")}
+						onMouseLeave={(e) => (e.target.style.fontWeight = "bold")}>
+						{params.value}
+					</span>
+				</Tooltip>
+			),
+		},
+		{
+			field: "organization",
+			headerName: "Customer",
+			width: 150,
+			align: "center",
+			headerAlign: "center",
+			renderCell: (params) =>
+				params.value === "" || !params.value ? (
+					<span style={{ fontSize: "10px", color: "gray" }}>No Customer Assigned</span>
+				) : (
+					params.value
+				),
+		},
+
+		{
+			field: "created",
+			headerName: "Created",
+			width: 200,
+			align: "center",
+			headerAlign: "center",
+			renderCell: (params) => formatDate(params.value),
+		},
+	];
 	useEffect(() => {
 		setActiveTitle({
 			title: "Customer Users",
 			subtitle: "List of all the Customer Users",
 		});
-		fetchCustomers();
+		fetchCustomerUsers();
 	}, []);
 
-	const fetchCustomers = async () => {
+	const fetchCustomerUsers = async () => {
 		setLoading(true);
 		try {
-			const response = await fetchCustomersService();
+			const response = await fetchCustomerUsersService();
 			if (response.status) {
 				console.log(response);
 				setError(null);
-				setCustomers(response.customer);
+				const customerUserCounts = response.data.map((customer) => ({
+					id: customer.id,
+					name: customer.name,
+					organization: customer?.organization?.name || "",
+					created: customer.createdAt,
+				}));
+				setCustomerUsers(customerUserCounts);
 				setLoading(false);
 			} else {
-				setError("Failed Fetching Customers");
-				setCustomers([]);
+				setError("Failed Fetching Customer Users");
+				setCustomerUsers([]);
 				setLoading(false);
 			}
 		} catch (error) {
-			setError("Failed Fetching Customers");
+			setError("Failed Fetching Customer Users");
 			setLoading(false);
-			setCustomers([]);
+			setCustomerUsers([]);
 		}
 	};
 
@@ -49,6 +96,20 @@ const CustomerUsers = () => {
 	const handleRowClick = (params) => {
 		console.log("Row clicked:", params.row);
 	};
+
+	function formatDate(isoString) {
+		const date = new Date(isoString);
+
+		const day = String(date.getDate()).padStart(2, "0");
+		const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-based
+		const year = date.getFullYear();
+
+		const hours = String(date.getHours()).padStart(2, "0");
+		const minutes = String(date.getMinutes()).padStart(2, "0");
+		const seconds = String(date.getSeconds()).padStart(2, "0");
+
+		return `${month}-${day}-${year} ${hours} ${minutes} ${seconds}`;
+	}
 
 	if (loading) {
 		return (
@@ -69,7 +130,7 @@ const CustomerUsers = () => {
 	return (
 		<Box p={2} px={4} width={"100%"}>
 			<CustomDatagrid
-				data={customers}
+				data={customerUsers}
 				columns={columns}
 				rowIdField="id"
 				onSelect={handleRowSelect}

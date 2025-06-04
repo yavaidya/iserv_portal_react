@@ -33,12 +33,13 @@ export const ThemeContextProvider = ({ children }) => {
 					mode,
 					primary: themeColors[accentColor],
 					background: {
-						default: mode === "light" ? "#fafafa" : "#303030",
+						default: mode === "light" ? "#f9fafc" : "#303030",
 						paper: mode === "light" ? "#ffffff" : "#424242",
 					},
 					text: {
 						primary: mode === "light" ? "#000000" : "#ffffff",
 					},
+					customBorder: mode === "light" ? "#eee" : "transparent",
 				},
 				typography: {
 					fontFamily,

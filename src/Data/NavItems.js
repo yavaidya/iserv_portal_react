@@ -53,25 +53,23 @@ export const adminMenu = [
 				icon: <StickyNote2RoundedIcon />,
 			},
 			{
-				title: "Invoices",
+				title: "Tasks",
+				subtitle: "Ticket assignments and progress",
+				path: "/Tasks",
+				icon: <FormatListBulletedRoundedIcon />,
+			},
+			{
+				title: "Quotes",
 				subtitle: "Billing and service charge records",
-				path: "/invoices",
+				path: "/quotes",
 				component: <Home />,
 				icon: <ReceiptRoundedIcon />,
 			},
 			{
-				title: "Documents",
-
+				title: "Knowledgebase",
 				subtitle: "Service manuals and compliance files",
 				icon: <TopicRoundedIcon />,
 				children: [
-					{
-						title: "Categories",
-						subtitle: "Organize document types",
-						path: "/document-categories",
-						icon: <FolderCopyRoundedIcon />,
-						component: <Home />,
-					},
 					{
 						title: "Documents",
 						subtitle: "View and manage service documents",
@@ -79,12 +77,19 @@ export const adminMenu = [
 						icon: <DescriptionRoundedIcon />,
 						component: <Home />,
 					},
+					{
+						title: "Categories",
+						subtitle: "Organize document types",
+						path: "/document-categories",
+						icon: <FolderCopyRoundedIcon />,
+						component: <Home />,
+					},
 				],
 			},
 		],
 	},
 	{
-		block: "Appointments",
+		block: "Service Scheduling",
 		items: [
 			{
 				title: "Appointments",
@@ -93,20 +98,13 @@ export const adminMenu = [
 				component: <Home />,
 				icon: <EventRoundedIcon />,
 			},
-			{
-				title: "Calender",
-				subtitle: "Technician and service calendar",
-				path: "/calender",
-				component: <Home />,
-				icon: <CalendarMonthRoundedIcon />,
-			},
 		],
 	},
 	{
 		block: "Field Operations",
 		item: [
 			{
-				title: "Customers",
+				title: "Organizations",
 				subtitle: "Manage OEMs and manufacturer accounts",
 				icon: <ContactMailRoundedIcon />,
 				children: [
@@ -148,12 +146,6 @@ export const adminMenu = [
 	{
 		block: "Service Hub",
 		item: [
-			{
-				title: "Tasks",
-				subtitle: "Ticket assignments and progress",
-				path: "/Tasks",
-				icon: <FormatListBulletedRoundedIcon />,
-			},
 			{
 				title: "Engineers",
 				subtitle: "Manage field engineers and assignments",

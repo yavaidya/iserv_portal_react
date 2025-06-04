@@ -85,12 +85,19 @@ const ProfileIcon = ({ sideBarCollapsed = false, reverse = false, showMenu = tru
 
 	useEffect(() => {
 		if (user) {
-			const loggedUserName = user?.name
-				? `${user.name.split(" ")[0]} ${user.name.split(" ")[1]?.charAt(0) || ""}`
-				: "John D";
-			setUserDisplayName(loggedUserName);
+			if (userMode === "user") {
+				const loggedUserName = user?.name
+					? `${user.name.split(" ")[0]} ${user.name.split(" ")[1]?.charAt(0) || ""}`
+					: "John D";
+				setUserDisplayName(loggedUserName);
+			} else if (userMode === "agent") {
+				const loggedUserName = user.account?.name
+					? `${user.account.name.split(" ")[0]} ${user.account.name.split(" ")[1]?.charAt(0) || ""}`
+					: "John D";
+				setUserDisplayName(loggedUserName);
+			}
 		}
-	}, [user, userMode]);
+	}, [user.account, userMode]);
 
 	function stringAvatar(name) {
 		return {
@@ -125,7 +132,7 @@ const ProfileIcon = ({ sideBarCollapsed = false, reverse = false, showMenu = tru
 						columnGap: "10px",
 						flexDirection: reverse ? "row-reverse" : "row",
 					}}>
-					<Avatar {...stringAvatar(`${user?.name}` || "John D")} />
+					<Avatar {...stringAvatar(`${userDisplayName}` || "John D")} />
 					{!sideBarCollapsed && (
 						<Box
 							sx={{
@@ -138,7 +145,7 @@ const ProfileIcon = ({ sideBarCollapsed = false, reverse = false, showMenu = tru
 								Welcome, {userDisplayName || "John D"}
 							</Typography>
 							<Typography variant="body1" color="text.secondary" fontSize={"10px"} lineHeight={"14px"}>
-								Service Manager
+								{userMode === "user" ? user?.organization?.name || "Customer" : "Service Manager"}
 							</Typography>
 						</Box>
 					)}

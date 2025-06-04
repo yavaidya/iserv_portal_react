@@ -1,12 +1,31 @@
 import React, { useState, useEffect, useRef } from "react";
 import { DataGrid } from "@mui/x-data-grid";
-import { Button, Toolbar, TextField, Tooltip, IconButton } from "@mui/material";
+import {
+	Button,
+	Toolbar,
+	TextField,
+	Tooltip,
+	IconButton,
+	ButtonGroup,
+	Menu,
+	MenuItem,
+	ListItemIcon,
+	ListItemText,
+} from "@mui/material";
 import { InputAdornment } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ContentCopyOutlinedIcon from "@mui/icons-material/ContentCopyOutlined";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import BackupTableIcon from "@mui/icons-material/BackupTable";
+import DeleteIcon from "@mui/icons-material/Delete";
+import FileUploadIcon from "@mui/icons-material/FileUpload";
+const options = [
+	{ text: "Delete", icon: <DeleteIcon /> },
+	{ text: "Export", icon: <FileUploadIcon /> },
+];
 
 const CustomDatagrid = ({
 	data,
@@ -23,18 +42,41 @@ const CustomDatagrid = ({
 	onRowClick,
 	pageSizeOptions = [pageSize],
 	showActions = true, // Default page size options
+	showMore = true,
+	selectedRowIds = {
+		type: "include",
+		ids: new Set(),
+	},
 }) => {
 	const [searchText, setSearchText] = useState("");
 	const [filteredData, setFilteredData] = useState(data);
+	const [rowSelectionModel, setRowSelectionModel] = useState(
+		selectedRowIds || {
+			type: "include",
+			ids: new Set(),
+		}
+	);
 
-	const handleSelectionChange = (newSelection) => {
+	const [open, setOpen] = useState(false);
+	const anchorRef = useRef(null);
+	const [selectedIndex, setSelectedIndex] = useState(0);
+
+	const handleSelectionChange = (e) => {
+		console.log("SelectedIDs: ", e);
 		if (onSelect) {
-			onSelect(newSelection);
+			onSelect(e);
 		}
 	};
 
+	// useEffect(() => {
+	// 	setFilteredData(data);
+	// }, [data, selectedRowIds]);
+
 	useEffect(() => {
 		setFilteredData(data);
+		// if (data.length > 0) {
+		// 	setRowSelectionModel(selectedRowIds);
+		// }
 	}, [data]);
 
 	// Handle search change
@@ -51,6 +93,41 @@ const CustomDatagrid = ({
 		});
 		setFilteredData(filteredRows);
 	};
+
+	const handleClick = () => {
+		const selectedAction = options[selectedIndex];
+		if (selectedAction === "Delete") {
+			console.log("Delete triggered");
+		} else if (selectedAction === "Export PDF") {
+			console.log("Export PDF triggered");
+		} else if (selectedAction === "Export Excel") {
+			console.log("Export Excel triggered");
+		}
+	};
+
+	const handleMenuItemClick = (event, index) => {
+		setSelectedIndex(index);
+		setOpen(false);
+		handleClick();
+	};
+
+	const handleToggle = () => {
+		setOpen((prevOpen) => !prevOpen);
+	};
+
+	const handleClose = (event) => {
+		if (anchorRef.current && anchorRef.current.contains(event.target)) {
+			return;
+		}
+		setOpen(false);
+	};
+
+	// const sortedData = [...filteredData].sort((a, b) => {
+	// 	const aSelected = rowModel.includes(a[rowIdField]);
+	// 	const bSelected = rowModel.includes(b[rowIdField]);
+	// 	if (aSelected === bSelected) return 0;
+	// 	return aSelected ? -1 : 1;
+	// });
 
 	const actions = [
 		{
@@ -116,7 +193,7 @@ const CustomDatagrid = ({
 					/>
 
 					{/* Custom Buttons */}
-					<Toolbar style={{ display: "flex", gap: "8px", margin: 0, padding: 0 }}>
+					<Toolbar style={{ display: "flex", gap: "8px", margin: 0, padding: 0, minHeight: "45px" }}>
 						{customButtons &&
 							customButtons.map((button, index) => (
 								<Button
@@ -136,6 +213,51 @@ const CustomDatagrid = ({
 									)}
 								</Button>
 							))}
+
+						{showMore && (
+							<>
+								<ButtonGroup variant="contained" ref={anchorRef} aria-label="More actions">
+									<Button onClick={handleToggle} sx={{ minWidth: "100px" }}>
+										More
+									</Button>
+									<Button
+										size="small"
+										aria-controls={open ? "split-button-menu" : undefined}
+										aria-expanded={open ? "true" : undefined}
+										aria-label="select action"
+										aria-haspopup="menu"
+										onClick={handleToggle}>
+										<ArrowDropDownIcon />
+									</Button>
+								</ButtonGroup>
+								<Menu
+									id="split-button-menu"
+									anchorEl={anchorRef.current}
+									open={open}
+									onClose={handleClose}
+									transformOrigin={{ horizontal: "right", vertical: "top" }}
+									anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+									slotProps={{
+										paper: {
+											elevation: 0,
+											sx: {
+												overflow: "visible",
+												filter: "drop-shadow(0px 6px 8px rgba(0,0,0,0.32))",
+												mt: 0.5,
+											},
+										},
+									}}>
+									{options.map((option, index) => (
+										<MenuItem
+											key={option.text}
+											onClick={(event) => handleMenuItemClick(event, index)}>
+											<ListItemIcon>{option.icon}</ListItemIcon>
+											<ListItemText>{option.text}</ListItemText>
+										</MenuItem>
+									))}
+								</Menu>
+							</>
+						)}
 					</Toolbar>
 				</div>
 			)}
@@ -156,13 +278,39 @@ const CustomDatagrid = ({
 						},
 					}}
 					{...(rowClick && { onRowClick })}
+					onRowSelectionModelChange={(newRowSelectionModel) => {
+						setRowSelectionModel(newRowSelectionModel);
+						handleSelectionChange(newRowSelectionModel);
+					}}
+					rowSelectionModel={rowSelectionModel}
 					pageSizeOptions={pageSizeOptions}
-					onRowSelectionModelChange={handleSelectionChange}
+					// onRowSelectionModelChange={handleSelectionChange}
 					onPageChange={onPageChange}
 					autoHeight={true}
 					disableSelectionOnClick
 					checkboxSelection={checkboxSelection} // Enable/Disable checkbox based on prop
-					getRowId={(row) => row[rowIdField]}
+					getRowId={(row) => row?.[rowIdField] ?? row?.id}
+					sx={{
+						backgroundColor: (theme) => theme.palette.background.paper,
+						"& .MuiDataGrid-main": {
+							backgroundColor: (theme) => theme.palette.background.paper,
+						},
+						"& .MuiDataGrid-cell": {
+							backgroundColor: (theme) => theme.palette.background.paper,
+						},
+						"& .MuiDataGrid-columnHeaders": {
+							backgroundColor: (theme) => theme.palette.background.paper,
+						},
+						"& .MuiDataGrid-columnHeader": {
+							backgroundColor: (theme) => theme.palette.background.paper,
+						},
+						"& .MuiDataGrid-footerContainer": {
+							backgroundColor: (theme) => theme.palette.background.paper,
+						},
+						"& .MuiDataGrid-root": {
+							backgroundColor: (theme) => theme.palette.background.paper,
+						},
+					}}
 				/>
 			</div>
 		</div>

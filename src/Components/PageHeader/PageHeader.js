@@ -1,23 +1,19 @@
 import { Box, Typography, Tooltip, IconButton } from "@mui/material";
 import HelpIcon from "@mui/icons-material/Help";
-import React from "react";
-import { usePageTitle } from "../../Context/PageTitleContext";
 
-const PageTitle = () => {
-	const { activeTitle } = usePageTitle();
-
+const PageHeader = ({ title, subtitle, helpContent = "" }) => {
 	return (
-		<Box>
+		<Box mb={4}>
 			<Box display="flex" alignItems="center">
 				<Typography variant="h3" fontWeight="bold">
-					{activeTitle.title}
+					{title}
 				</Typography>
-				{activeTitle.tooltip && (
+				{(helpContent || subtitle) && (
 					<Tooltip
 						title={
 							<Box>
 								<Typography fontWeight="bold">Info</Typography>
-								<Typography variant="body2">{activeTitle.tooltip}</Typography>
+								<Typography variant="body2">{helpContent ? helpContent : subtitle}</Typography>
 							</Box>
 						}
 						arrow
@@ -40,9 +36,9 @@ const PageTitle = () => {
 				)}
 			</Box>
 
-			{activeTitle.subtitle !== "" && (
+			{subtitle !== "" && (
 				<Typography variant="subtitle1" color="textSecondary">
-					{activeTitle.subtitle}
+					{subtitle}
 				</Typography>
 			)}
 
@@ -58,4 +54,4 @@ const PageTitle = () => {
 	);
 };
 
-export default PageTitle;
+export default PageHeader;

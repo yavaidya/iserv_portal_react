@@ -20,9 +20,8 @@ const PageNotFound = () => {
 			flexDirection="column"
 			justifyContent="center"
 			alignItems="center"
-			height="77vh"
+			height="75vh"
 			textAlign="center"
-			sx={{ background: (theme) => theme.palette.background.default }}
 			px={2}>
 			<Typography variant="h1" color="primary" gutterBottom>
 				404
@@ -33,7 +32,7 @@ const PageNotFound = () => {
 			<Typography variant="body1" mb={4}>
 				The page you're looking for doesn't exist or has been moved.
 			</Typography>
-			<Button variant="contained" color="primary" onClick={() => navigate("/")}>
+			<Button variant="contained" color="primary" onClick={() => navigate("/home")}>
 				Go to Home
 			</Button>
 		</Box>

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import loginService from "../Services/authService";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 // Create the context
 const AuthContext = createContext();
@@ -13,6 +13,7 @@ export const AuthProvider = ({ children }) => {
 	const [isAuthenticated, setIsAuthenticated] = useState(false);
 	const [loading, setLoading] = useState(true);
 	const navigate = useNavigate();
+	const location = useLocation();
 	// Load user from localStorage on mount
 	useEffect(() => {
 		const userRoleMode = localStorage.getItem("userMode");
@@ -62,29 +63,27 @@ export const AuthProvider = ({ children }) => {
 			const response = await loginService(formData);
 			console.log(response);
 			if (response.status) {
-				if (
-					(formData.serviceEngineer && response.role === "agent") ||
-					(!formData.serviceEngineer && response.role === "user")
-				) {
+				if (formData.mode === response.mode) {
 					if (response.role === "agent") {
 						setUserAdditionalData(response.u_c);
 					} else {
 						setUserAdditionalData(null);
 					}
-					setUser(response.user);
-					setUserMode(response.role);
+					setUser(response.data);
+					setUserMode(response.mode);
 					setTimeout(() => {
 						setLoading(false);
 						setIsAuthenticated(true);
 						setLoading(false);
-						navigate("/dashboard");
+						const redirectTo = location.state?.from?.pathname || "/dashboard";
+						navigate(redirectTo, { replace: true });
 					}, 1000);
 				} else {
 					setError("Login failed. Check your email and password.");
 					setLoading(false);
 				}
-			} else if (!response.status && response.message === "Invalid Credentials!") {
-				setError("Login failed. Check your email and password.");
+			} else {
+				setError(`${response.message}, Check your email and password.`);
 				setLoading(false);
 			}
 			return response;

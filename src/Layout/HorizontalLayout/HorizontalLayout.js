@@ -1,4 +1,4 @@
-import { Box, Button } from "@mui/material";
+import { Box, Button, Paper } from "@mui/material";
 import React, { act, use, useEffect, useState } from "react";
 import { useCustomTheme } from "../../Context/ThemeContext";
 import GlobalSearch from "../../Components/GlobalSearch/GlobalSearch";
@@ -18,6 +18,8 @@ import Profile from "../../Pages/Profile/Profile";
 import Customers from "../../Pages/Customers/Customers";
 import CustomerUsers from "../../Pages/CustomerUsers/CustomerUsers";
 import Tickets from "../../Pages/Tickets/Tickets";
+import Equipments from "../../Pages/Equipments/Equipments";
+import Agents from "../../Pages/Agents/Agents";
 const HorizontalLayout = () => {
 	const { userMode } = useAuth();
 	const { flexCol, flexRow } = useCustomTheme();
@@ -98,19 +100,35 @@ const HorizontalLayout = () => {
 						}}>
 						<Hero />
 						<Box sx={{ width: "100%", overflowY: "auto" }}>
-							<Box minHeight={"75vh"}>
-								<Routes>
-									{/* {dynamicRoutes.map(({ path, component }) => (
+							<Box minHeight={"77vh"} pt={2}>
+								<Paper
+									sx={{
+										background: (theme) => theme.palette.background.paper,
+										mx: 3,
+										ml: 4,
+										mb: 3,
+										pt: 1,
+										borderRadius: 2,
+										boxShadow: "0 0 20px 0px rgba(0,0,0,0.1)",
+										minHeight: "400px",
+										// border: "1px solid",
+										// borderColor: (theme) => theme.palette.customBorder,
+									}}>
+									<Routes>
+										{/* {dynamicRoutes.map(({ path, component }) => (
 										<Route key={path} path={path} element={component} />
 									))} */}
-									<Route path="/home" element={<Home />} />
-									<Route path="/settings" element={<ThemeCustomizer />} />
-									<Route path="/profile" element={<Profile />} />
-									<Route path="/customers" element={<Customers />} />
-									<Route path="/tickets" element={<Tickets />} />
-									<Route path="/users" element={<CustomerUsers />} />
-									<Route path="/*" element={<PageNotFound />} />
-								</Routes>
+										<Route path="/home" element={<Home />} />
+										<Route path="/settings" element={<ThemeCustomizer />} />
+										<Route path="/profile" element={<Profile />} />
+										<Route path="/customers" element={<Customers />} />
+										<Route path="/equipments" element={<Equipments />} />
+										<Route path="/staff" element={<Agents />} />
+										<Route path="/tickets" element={<Tickets />} />
+										<Route path="/users" element={<CustomerUsers />} />
+										<Route path="/*" element={<PageNotFound />} />
+									</Routes>
+								</Paper>
 							</Box>
 							<Footer />
 						</Box>

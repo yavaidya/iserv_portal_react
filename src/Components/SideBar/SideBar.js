@@ -1,4 +1,4 @@
-import { alpha, Box, Divider, IconButton, Tooltip, Typography } from "@mui/material";
+import { alpha, Box, Divider, IconButton, Paper, Tooltip, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { useCustomTheme } from "../../Context/ThemeContext";
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
@@ -41,24 +41,26 @@ const SideBar = ({ userMenu = "user", activeMenu, setActiveMenu }) => {
 		<Box
 			sx={{
 				...flexCol,
-				width: sideBarCollapsed ? "5%" : "12%",
+				width: sideBarCollapsed ? "5%" : "225px",
 				height: "100%",
 			}}>
-			<Box
+			<Paper
 				sx={{
 					...flexCol,
 					width: "100%",
 					p: 2,
 					background: (theme) => theme.palette.background.paper,
-					boxShadow: "2px 7px 6px 2px rgba(0,0,0,0.1)",
+					// boxShadow: "2px 7px 6px 2px rgba(0,0,0,0.1)",
+					boxShadow: "0 0 20px 0px rgba(0,0,0,0.1)",
 					height: "100%",
 					// overflow: "hidden",
 					position: "relative",
+					borderRadius: 0,
 				}}>
 				<Box
 					sx={{
 						position: "absolute",
-						top: 10,
+						top: 18,
 						zIndex: 10,
 						right: sideBarCollapsed ? 1 : -1, // adjust as needed
 						transform: sideBarCollapsed ? "translateX(50%)" : "translateX(50%)",
@@ -67,7 +69,7 @@ const SideBar = ({ userMenu = "user", activeMenu, setActiveMenu }) => {
 						boxShadow: "0px 2px 5px rgba(0,0,0,0.1)",
 					}}>
 					<Tooltip title={sideBarCollapsed ? "Expand Menu" : "Collapse Menu"}>
-						<IconButton onClick={collapseExpandSidebar} size="small" color="primary">
+						<IconButton onClick={collapseExpandSidebar} size="medium" color="primary">
 							{sideBarCollapsed ? <MenuIcon /> : <MenuOpenIcon />}
 						</IconButton>
 					</Tooltip>
@@ -91,7 +93,7 @@ const SideBar = ({ userMenu = "user", activeMenu, setActiveMenu }) => {
 				<Box sx={{ width: "100%", height: "55px" }}>
 					<ProfileIcon sideBarCollapsed={sideBarCollapsed} />
 				</Box>
-			</Box>
+			</Paper>
 		</Box>
 	);
 };

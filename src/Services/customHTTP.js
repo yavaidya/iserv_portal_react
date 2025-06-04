@@ -3,7 +3,7 @@ import { API_BASE_URL, API_KEY } from "../config";
 console.log("API Key: ", API_KEY);
 // Create a custom axios instance
 const customHttp = axios.create({
-	baseURL: API_BASE_URL || "http://dev.local/iserv-portal/customapi2.0",
+	baseURL: API_BASE_URL || "http://localhost:5000",
 	headers: {
 		"Content-Type": "application/json",
 	},
@@ -16,7 +16,7 @@ customHttp.interceptors.request.use(
 	(config) => {
 		const token = API_KEY; // Assuming the token is stored in localStorage
 		if (token) {
-			config.headers["X-Api-Key"] = `${token}`;
+			config.headers["Authorization"] = `Bearer ${token}`;
 		}
 		return config;
 	},
