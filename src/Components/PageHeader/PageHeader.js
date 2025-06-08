@@ -3,7 +3,7 @@ import HelpIcon from "@mui/icons-material/Help";
 
 const PageHeader = ({ title, subtitle, helpContent = "" }) => {
 	return (
-		<Box mb={4}>
+		<Box mb={2}>
 			<Box display="flex" alignItems="center">
 				<Typography variant="h3" fontWeight="bold">
 					{title}

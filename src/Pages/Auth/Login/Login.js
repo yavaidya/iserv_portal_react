@@ -117,7 +117,7 @@ const Login = () => {
 							width: "100%",
 						}}>
 						<Typography variant="h3" fontWeight={"bold"}>
-							{loginTitle} {t("login")}
+							{loginTitle} Login
 						</Typography>
 						<Box
 							sx={{

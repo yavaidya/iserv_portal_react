@@ -3,6 +3,9 @@ import { useCustomTheme } from "../../Context/ThemeContext";
 import { useState } from "react";
 import { useEffect } from "react";
 import {
+	Accordion,
+	AccordionDetails,
+	AccordionSummary,
 	Alert,
 	Autocomplete,
 	Box,
@@ -10,9 +13,13 @@ import {
 	CircularProgress,
 	Divider,
 	Drawer,
+	FormControl,
 	IconButton,
+	MenuItem,
 	Paper,
+	Select,
 	Step,
+	StepContent,
 	StepLabel,
 	Stepper,
 	TextField,
@@ -32,6 +39,20 @@ import { DatePicker } from "@mui/x-date-pickers";
 import moment from "moment";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
+import Swal from "sweetalert2";
+import { createEquipmentsService, fetchEquipmentByIdService } from "../../Services/equipmentService";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import { useRef } from "react";
+import DocumentsForm from "../DocumentsForm/DocumentsForm";
+import DocumentCard from "../DocumentCard/DocumentCard";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { fetchDocumentsService } from "../../Services/documentService";
+import _ from "lodash";
+import FormField from "../FormField/FormField";
+import ProvisionForm from "../ProvisionForm/ProvisionForm";
+import ProvisionFormCard from "../ProvisionFormCard/ProvisionFormCard";
+import LibraryAddCheckIcon from "@mui/icons-material/LibraryAddCheck";
+import DocumentsSelectionForm from "../DocumentsSelectionForm/DocumentsSelectionForm";
 
 const customersList = [
 	{ id: 1, label: "Acme Corp" },
@@ -48,99 +69,6 @@ const sitesList = [
 	{ id: 401, label: "Wayne - Gotham", customerId: 4 },
 ];
 
-const machineDocuments = [
-	{
-		kb_id: 1,
-		category_id: 101,
-		ispublished: true,
-		subject: "Routine Maintenance Guide - Model X100",
-		answer: "Perform weekly checks on oil levels, belts, and filters. Follow the 10-step procedure as outlined in the attached PDF.",
-		attachment_id: 201,
-		keywords: "maintenance, model X100, oil check, filters, belts",
-		notes: "Updated quarterly based on field feedback.",
-		category: {
-			category_id: 101,
-			category_pid: null,
-			ispublic: true,
-			name: "Maintenance",
-			description: "Guides and schedules for regular machine maintenance.",
-			notes: "Covers all standard models.",
-		},
-	},
-	{
-		kb_id: 2,
-		category_id: 102,
-		ispublished: true,
-		subject: "Initial Setup Instructions - Model Z200",
-		answer: "Place the machine on a level surface, connect to a 220V power source, and follow the calibration procedure in the attachment.",
-		attachment_id: 202,
-		keywords: "setup, installation, model Z200, calibration",
-		notes: "Last verified by engineering team on May 2025.",
-		category: {
-			category_id: 102,
-			category_pid: null,
-			ispublic: true,
-			name: "Setup & Installation",
-			description: "Documentation for setting up and installing machines.",
-			notes: "Includes wiring and positioning info.",
-		},
-	},
-	{
-		kb_id: 3,
-		category_id: 103,
-		ispublished: true,
-		subject: "Error Code E45 Troubleshooting - Model A300",
-		answer: "Error E45 indicates a sensor misalignment. Power off the machine, realign the sensor block, and restart.",
-		attachment_id: null,
-		keywords: "error E45, troubleshooting, sensor, model A300",
-		notes: "Common issue in cold environments. Recommend heater upgrade.",
-		category: {
-			category_id: 103,
-			category_pid: null,
-			ispublic: true,
-			name: "Troubleshooting",
-			description: "Help articles for resolving common errors and faults.",
-			notes: "Should link to error code directory.",
-		},
-	},
-	{
-		kb_id: 4,
-		category_id: 104,
-		ispublished: false,
-		subject: "Emergency Shutdown Protocol - All Models",
-		answer: "In case of emergency, press the red EMERGENCY STOP button. Follow internal evacuation and reporting procedures.",
-		attachment_id: 204,
-		keywords: "emergency, shutdown, safety, all models",
-		notes: "Pending final review by Safety Committee.",
-		category: {
-			category_id: 104,
-			category_pid: null,
-			ispublic: false,
-			name: "Safety Procedures",
-			description: "Mandatory safety operations and emergency responses.",
-			notes: "Requires compliance training.",
-		},
-	},
-	{
-		kb_id: 5,
-		category_id: 105,
-		ispublished: true,
-		subject: "Firmware Update Instructions - Controller v3.2",
-		answer: "Connect the controller to a laptop via USB. Launch the update tool and load firmware file v3.2. Follow prompts.",
-		attachment_id: 205,
-		keywords: "firmware, update, controller v3.2, USB",
-		notes: "Ensure backup is taken before update.",
-		category: {
-			category_id: 105,
-			category_pid: null,
-			ispublic: true,
-			name: "Software Updates",
-			description: "Instructions for applying updates to machine firmware or software.",
-			notes: "Cross-reference with release notes.",
-		},
-	},
-];
-
 const defaultProvision = {
 	customer: null,
 	site: null,
@@ -149,45 +77,215 @@ const defaultProvision = {
 };
 
 const EquipmentForm = ({
-	useDrawer = true,
-	setUseDrawer,
+	drawerForm = true,
+	setDrawerForm,
 	formOpen,
 	setFormOpen,
 	formData,
 	setFormData,
 	activeStep,
 	setActiveStep,
+	fetchEquipments,
+	equipments = [],
+	isEditing = false,
+	selectedEqId = null,
 }) => {
+	const steps = [
+		{ label: "Equipment Details", description: "Enter basic equipment details", required: true },
+		{ label: "Documents Provisioning", description: "Provision documnets to this equipment", required: false },
+		{ label: "Customer(s) Provision", description: "Provision this equipment to customers", required: false },
+	];
+	const formTitle = isEditing ? `Editing Equipment: ${formData.equipmentName}` : "Add New Equipment";
+	const formSubTitle = isEditing
+		? "Please fill out the following to update equipment"
+		: "Please fill out the following to add a new equipment";
+	const step0Ref = useRef(null);
+	const initialFormDataRef = useRef();
 	const { flexCol, flexRow } = useCustomTheme();
 	const [error, setError] = useState(null);
 	const [loading, setLoading] = useState(true);
+	const [eqList, setEqList] = useState([]);
+	const [eqListTest, setEqListTest] = useState([]);
 	const [equipmentImage, setEquipmentImage] = useState(null);
-	const [formErrors, setFormErrors] = useState({
-		equipmentName: "",
-		equipmentParent: "",
-		internalNotes: "",
-	});
-	const [formTitle, setFormTitle] = useState("Add New Equipment");
-	const [formSubTitle, setFormSubTitle] = useState("Please fill out the following to add a new equipment");
+	const [provisionErrors, setProvisionErrors] = useState([]);
+	const [docFormOpen, setDocFormOpen] = useState(false);
+	const [selectExisting, setSelectExisting] = useState(false);
 	const [documents, setDocuments] = useState([]);
-	const steps = ["Equipment Details", "Documents Provisioning", "Customer(s) Provision"];
+	const [provisionedDocuments, setProvisionedDocuments] = useState([]);
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [expanded, setExpanded] = useState("available");
+	const [provisionFormOpen, setProvisionFormOpen] = useState(false);
+	const [moveAlert, setMoveAlert] = useState(false);
+	const [formErrors, setFormErrors] = useState({
+		equipmentName: false,
+		equipmentParent: false,
+		internalNotes: false,
+		isPublic: false,
+		status: false,
+	});
+	const [parentEqDocs, setParentEqDocs] = useState([]);
+
+	const handleAccordianChange = (panel) => (event, isExpanded) => {
+		setExpanded(isExpanded ? panel : false);
+	};
+
+	useEffect(() => {
+		if (equipments.length > 0) {
+			const eqs = equipments.map((eq) => ({
+				id: eq.id,
+				label: eq.name,
+			}));
+			const updatedList = [{ id: 0, label: "-- Top Level --" }, ...eqs];
+			setEqList(updatedList);
+		}
+		fetchDocuments();
+	}, []);
+
+	useEffect(() => {
+		if (formOpen) {
+			initialFormDataRef.current = _.cloneDeep(formData);
+		}
+	}, [formOpen]);
+
+	useEffect(() => {
+		console.log("Eq Updated: ", formData);
+	}, [formData]);
+
+	useEffect(() => {
+		if (moveAlert) {
+			setTimeout(() => {
+				setMoveAlert(false);
+			}, 5000);
+		}
+	}, [moveAlert]);
+
+	useEffect(() => {
+		if (Object.keys(formData.equipmentParent).length > 0 && formData.equipmentParent.id !== 0) {
+			fetchEquipmentParent();
+		} else {
+			setFormData((prev) => ({ ...prev, parent_doc_ids: [] }));
+			setParentEqDocs([]);
+			setExpanded("");
+		}
+	}, [formData.equipmentParent]);
+
+	const fetchEquipmentParent = async () => {
+		const response = await fetchEquipmentByIdService(formData.equipmentParent.id);
+		const { parentDocs, kbIdArray } = extractDocs(response.data);
+		console.log("Grouped Docs by Category:", parentDocs);
+		console.log("Unique kb_ids:", kbIdArray);
+
+		const alreadyExists =
+			(formData.documents || []).some((doc) => kbIdArray.includes(doc.kb_id)) ||
+			(formData.selected_doc_ids || []).some((id) => kbIdArray.includes(id));
+
+		if (alreadyExists) {
+			setMoveAlert(true);
+		}
+
+		setFormData((prev) => {
+			const updatedDocuments = (prev.documents || []).filter((doc) => !kbIdArray.includes(doc.kb_id));
+
+			const updatedSelectedIds = (prev.selected_doc_ids || []).filter((id) => !kbIdArray.includes(id));
+
+			return {
+				...prev,
+				parent_doc_ids: kbIdArray,
+				documents: updatedDocuments,
+				selected_doc_ids: updatedSelectedIds,
+			};
+		});
+
+		setParentEqDocs(parentDocs);
+	};
+
+	const extractDocs = (equipment) => {
+		const categoryMap = new Map(); // category_id → { category_name, docs: [] }
+		const seenKbIds = new Set(); // To track unique kb_ids
+		const kbIdArray = []; // To store unique kb_ids
+
+		const traverse = (eq) => {
+			if (!eq) return;
+
+			eq.eq_docs?.forEach((doc) => {
+				const kb = doc.knowledgebase;
+				if (!kb || seenKbIds.has(kb.kb_id)) return;
+
+				seenKbIds.add(kb.kb_id);
+				kbIdArray.push(kb.kb_id);
+
+				const category = kb.category;
+				if (!category) return;
+
+				const catId = category.category_id;
+				if (!categoryMap.has(catId)) {
+					categoryMap.set(catId, {
+						category_id: catId,
+						category_name: category.name,
+						docs: [],
+					});
+				}
+
+				categoryMap.get(catId).docs.push({
+					kb_id: kb.kb_id,
+					title: kb.title,
+					description: kb.description,
+					...kb,
+				});
+			});
+
+			if (eq.parent_equipment) {
+				traverse(eq.parent_equipment);
+			}
+		};
+
+		traverse(equipment);
+
+		return {
+			parentDocs: Array.from(categoryMap.values()),
+			kbIdArray, // Unique kb_ids
+		};
+	};
 
 	// Navigation
 	const handleNext = () => {
 		if (activeStep === 0) {
-			if (!formData.equipmentName?.trim()) {
-				setFormErrors((prev) => ({ ...prev, equipmentName: true }));
-				setError("Equipment Name is Required");
-				return; // Don't proceed to next step
+			const requiredFields = ["equipmentName", "isPublic", "status"];
+			const newErrors = {};
+
+			requiredFields.forEach((field) => {
+				const value = formData[field];
+
+				// If it's a string, trim and check
+				if (typeof value === "string") {
+					if (!value.trim()) newErrors[field] = true;
+				}
+				// If it's undefined or null, it's invalid
+				else if (value === undefined || value === null) {
+					newErrors[field] = true;
+				}
+				// For other types like boolean or number, check for emptiness
+				else if (value === "") {
+					newErrors[field] = true;
+				}
+			});
+
+			const updatedErrors = {};
+			requiredFields.forEach((field) => {
+				updatedErrors[field] = !!newErrors[field]; // true if error, false otherwise
+			});
+			setFormErrors(updatedErrors);
+
+			if (Object.keys(newErrors).length > 0) {
+				setError("Please fill all the required fields.");
+				return;
 			} else {
-				setError(false);
-				setFormErrors((prev) => ({ ...prev, equipmentName: false }));
+				setError(null);
 			}
 		}
-
 		setActiveStep((prev) => Math.min(prev + 1, steps.length - 1));
 	};
+
 	const handleBack = () => setActiveStep((prev) => Math.max(prev - 1, 0));
 
 	const handleFormChange = (e) => {
@@ -221,507 +319,664 @@ const EquipmentForm = ({
 		if (!handleSubmit) {
 			return;
 		}
-		setIsSubmitting(true);
 		try {
 			await handleSubmit(formData);
 		} catch (err) {
 			console.error(err);
-		} finally {
-			setIsSubmitting(false);
 		}
 	};
 
-	useEffect(() => {
-		const docs = machineDocuments.map((doc) => {
-			return {
-				id: doc.kb_id,
-				name: doc.subject,
-				category: doc?.category?.name || "",
-			};
-		});
-		console.log(docs);
-		setDocuments(docs);
-		setLoading(false);
-	}, []);
+	const fetchDocuments = async () => {
+		setLoading(true);
+		try {
+			const response = await fetchDocumentsService();
 
-	const handleAddProvision = () => {
-		setFormData((prev) => ({
-			...prev,
-			provisions: [...prev.provisions, { ...defaultProvision }],
-		}));
+			if (response.status) {
+				const selectedIds = formData.documents || [];
+				const docs = response.data
+					.filter((doc) => !selectedIds.includes(doc.kb_id))
+					.map((doc) => ({
+						id: doc.kb_id,
+						name: doc.title,
+						category: doc?.category?.name || "",
+					}));
+
+				setDocuments(docs);
+
+				const provisionedDocs = response.data
+					.filter((doc) => selectedIds.includes(doc.kb_id)) // include only matched kb_ids
+					.map((doc) => ({
+						kb_id: doc.kb_id,
+						category: doc?.category?.category_id || "",
+						category_name: doc?.category?.name || "",
+						newCategory: "",
+						newCategoryListingType: "public",
+						title: doc.title,
+						description: doc.description,
+						file: null,
+						attachmentUrl: doc?.attachment?.path,
+						attachmentType: doc?.attachment?.attachmentType || "na",
+						listingType: doc.ispublished,
+						internalNotes: doc.notes,
+					}));
+				setProvisionedDocuments(provisionedDocs);
+				if (docs.length > 0) {
+					setExpanded("available");
+				} else {
+					setExpanded("provisioned");
+				}
+				setLoading(false);
+			}
+		} catch (error) {
+			console.log(error);
+			setDocuments([]);
+			setLoading(false);
+		}
 	};
-
-	const handleDeleteProvision = (index) => {
-		setFormData((prev) => ({
-			...prev,
-			provisions: prev.provisions.filter((_, i) => i !== index),
-		}));
-	};
-
-	const handleProvisionChange = (index, key, value) => {
-		const updated = [...formData.provisions];
-		updated[index][key] = value;
-		setFormData((prev) => ({ ...prev, provisions: updated }));
-	};
-
-	const getFilteredSites = (customerId) => {
-		return sitesList.filter((site) => site.customerId === customerId);
-	};
-
-	const columns_doc = [
-		{
-			field: "name",
-			headerName: "Document Name",
-			flex: 1,
-			renderCell: (params) => (
-				<Tooltip title="View Document Details">
-					<span
-						style={{
-							cursor: "pointer",
-							fontWeight: "bold",
-						}}
-						onMouseEnter={(e) => (e.target.style.fontWeight = "bold")}
-						onMouseLeave={(e) => (e.target.style.fontWeight = "bold")}>
-						{params.value}
-					</span>
-				</Tooltip>
-			),
-		},
-		{
-			field: "category",
-			headerName: "Category",
-			width: 150,
-			align: "center",
-			headerAlign: "center",
-			renderCell: (params) =>
-				params.value === "" ? (
-					<span style={{ fontSize: "10px", color: "gray" }}>No Category</span>
-				) : (
-					params.value
-				),
-		},
-	];
 
 	const handleSubmit = async (data) => {
+		setIsSubmitting(true);
 		console.log("Final form data:", data);
-		setFormData({
-			equipmentName: "",
-			equipmentParent: "",
-			internalNotes: "",
-			doc_ids: {
-				type: "include",
-				ids: new Set(),
-			},
-			provisions: [
-				{
-					customer: null,
-					site: null,
-					provisionedDate: moment(), // today
-					serialNumber: "",
-				},
-			],
-		});
-		setFormOpen(false);
-		setUseDrawer(true);
-		setActiveStep(0);
-	};
+		const req_body = {
+			eq_id: selectedEqId ? selectedEqId : null,
+			eq_pid: parseInt(data.equipmentParent?.id || null),
+			ispublic: data.isPublic,
+			status: parseInt(data.status),
+			equipment: data.equipmentName,
+			notes: data.internalNotes,
+			documents: data.documents,
+			provisions: data.provisions,
+		};
+		if (isEditing) {
+			console.log("Editing: ", req_body);
+		} else {
+			const response = await createEquipmentsService(req_body);
+			if (response.status) {
+				setIsSubmitting(false);
+				await fetchEquipments();
+				setFormOpen(false);
 
-	const handleDocRowSelect = (selectedRows) => {
-		const rows = Array.from(selectedRows.ids);
-		console.log("Selected doc row IDs:", rows);
-		setFormData((prevData) => ({
-			...prevData,
-			doc_ids: selectedRows,
-		}));
-	};
-
-	const handleDocRowClick = (params) => {
-		console.log("Row clicked:", params.row);
+				setDrawerForm(true);
+				setActiveStep(0);
+				setFormData({
+					equipmentName: "",
+					equipmentParent: { id: 0, label: "-- Top Level --" },
+					internalNotes: "",
+					isPublic: true,
+					status: "0",
+					documents: [],
+					provisions: [],
+					selected_doc_ids: [],
+					parent_doc_ids: [],
+				});
+				Swal.fire({
+					icon: "success",
+					title: "Success",
+					text: response.message,
+				});
+			}
+		}
 	};
 
 	const handleCloseForm = () => {
-		console.log("Form Closed");
-		setFormOpen(false);
-		setUseDrawer(true);
+		const hasChanged = !_.isEqual(formData, initialFormDataRef.current);
+
+		if (!hasChanged) {
+			setFormOpen(false);
+			setDrawerForm(true);
+			setActiveStep(0);
+			setFormData({
+				equipmentName: "",
+				equipmentParent: { id: 0, label: "-- Top Level --" },
+				internalNotes: "",
+				isPublic: true,
+				status: "0",
+				documents: [],
+				provisions: [],
+				selected_doc_ids: [],
+				parent_doc_ids: [],
+			});
+			return;
+		}
+		Swal.fire({
+			icon: "warning",
+			title: "Are you sure?",
+			text: "You are attempting to close the Form! Any unsaved data will be lost.",
+			showDenyButton: true,
+			confirmButtonText: "Yes",
+			denyButtonText: `No`,
+		}).then((result) => {
+			if (result.isConfirmed) {
+				console.log("Form Closed");
+				setFormOpen(false);
+				setDrawerForm(true);
+				setActiveStep(0);
+				setFormData({
+					equipmentName: "",
+					equipmentParent: { id: 0, label: "-- Top Level --" },
+					internalNotes: "",
+					isPublic: true,
+					status: "0",
+					documents: [],
+					provisions: [],
+					selected_doc_ids: [],
+					parent_doc_ids: [],
+				});
+			}
+		});
 	};
+
+	const handleRemoveProvisions = (equipment, serial_number) => {
+		const currentProvisions = formData.provisions;
+		const uniqueProvisionedProvisions = currentProvisions.filter(
+			(prov) => prov.equipment !== equipment && prov.serialNumber === serial_number
+		);
+		setFormData((prev) => {
+			return {
+				...prev,
+				provisions: uniqueProvisionedProvisions,
+			};
+		});
+	};
+
+	const handleRemoveDocuments = (doc_id) => {
+		const currentDocuments = formData.documents || [];
+		const currentSelectedIds = formData.selected_doc_ids || [];
+
+		const updatedDocuments = currentDocuments.filter((doc) => doc.kb_id !== doc_id);
+		const updatedSelectedIds = currentSelectedIds.filter((id) => id !== doc_id);
+
+		setFormData((prev) => ({
+			...prev,
+			documents: updatedDocuments,
+			selected_doc_ids: updatedSelectedIds,
+		}));
+	};
+
+	const textFieldRef = useRef(null);
+
+	useEffect(() => {
+		if (activeStep === 0) {
+			// Delay the focus to ensure the TextField is mounted
+			const timer = setTimeout(() => {
+				textFieldRef.current?.focus();
+			}, 0);
+
+			return () => clearTimeout(timer);
+		}
+	}, [activeStep]);
 
 	if (loading) {
 		return (
-			<Box sx={{ ...flexCol, justifyContent: "center", alignItems: "center", minHeight: "300px", width: "100%" }}>
+			<Box sx={{ ...flexCol, justifyContent: "center", alignItems: "center", minHeight: "300px", width: "50vw" }}>
 				<CircularProgress />
 			</Box>
 		);
 	}
 
 	return (
-		<LocalizationProvider dateAdapter={AdapterMoment}>
-			<Box
-				p={useDrawer ? 1 : 0}
-				width={useDrawer ? "45vw" : "100%"}
-				sx={{
-					display: "flex",
-					flexDirection: "column",
-					height: "100%",
-				}}>
-				{/* Top section (IconButtons) */}
-				{useDrawer ? (
-					<Box
-						sx={{
-							...flexRow,
-							justifyContent: "space-between",
-							width: "100%",
-							mb: 1,
-						}}>
-						<Tooltip title={useDrawer ? "Open in Full Screen" : "Open in Drawer"}>
-							<IconButton size="small" onClick={() => setUseDrawer(!useDrawer)}>
-								{useDrawer ? <OpenInFullIcon /> : <CloseFullscreenIcon />}
-							</IconButton>
-						</Tooltip>
-						<Tooltip title="Close the Form">
-							<IconButton size="small" onClick={handleCloseForm}>
-								<CloseIcon />
-							</IconButton>
-						</Tooltip>
-					</Box>
-				) : (
-					<Box
-						sx={{
-							...flexRow,
-							justifyContent: "space-between",
-							width: "100%",
-						}}>
-						<Tooltip title="Close the Form">
-							<Button startIcon={<ArrowBackIcon />} onClick={handleCloseForm}>
-								Close Form
-							</Button>
-						</Tooltip>
+		<>
+			<LocalizationProvider dateAdapter={AdapterMoment}>
+				<Box
+					p={drawerForm ? 1 : 0}
+					width={drawerForm ? "50vw" : "100%"}
+					sx={{
+						display: "flex",
+						flexDirection: "column",
+						height: "100%",
+					}}>
+					{/* Top section (IconButtons) */}
+					{drawerForm ? (
 						<Box
 							sx={{
 								...flexRow,
-								justifyContent: "flex-end",
-								width: "60%",
+								justifyContent: "space-between",
+								width: "100%",
 								mb: 1,
 							}}>
-							<Tooltip title={useDrawer ? "Open in Full Screen" : "Open in Drawer"}>
-								<IconButton size="small" onClick={() => setUseDrawer(!useDrawer)}>
-									{useDrawer ? <OpenInFullIcon /> : <CloseFullscreenIcon />}
+							<Tooltip title={drawerForm ? "Open in Full Screen" : "Open in Drawer"}>
+								<IconButton size="small" onClick={() => setDrawerForm(!drawerForm)}>
+									{drawerForm ? <OpenInFullIcon /> : <CloseFullscreenIcon />}
+								</IconButton>
+							</Tooltip>
+							<Tooltip title="Close the Form">
+								<IconButton size="small" onClick={handleCloseForm}>
+									<CloseIcon />
 								</IconButton>
 							</Tooltip>
 						</Box>
-					</Box>
-				)}
+					) : (
+						<Box
+							sx={{
+								...flexRow,
+								justifyContent: "space-between",
+								width: "100%",
+							}}>
+							<Tooltip title="Close the Form">
+								<Button startIcon={<ArrowBackIcon />} sx={{ pl: 0 }} onClick={handleCloseForm}>
+									Close Form
+								</Button>
+							</Tooltip>
+							<Box
+								sx={{
+									...flexRow,
+									justifyContent: "flex-end",
+									width: "60%",
+									mb: 1,
+								}}>
+								<Tooltip title={drawerForm ? "Open in Full Screen" : "Open in Drawer"}>
+									<IconButton size="small" onClick={() => setDrawerForm(!drawerForm)}>
+										{drawerForm ? <OpenInFullIcon /> : <CloseFullscreenIcon />}
+									</IconButton>
+								</Tooltip>
+							</Box>
+						</Box>
+					)}
 
-				{/* Content container with scrollable step content */}
-				<Box
-					sx={{
-						flexGrow: 1,
-						overflowY: "auto",
-						px: useDrawer ? 3 : 0,
-						py: 1,
-						minHeight: 0, // Required to ensure flexGrow + overflow works properly
-					}}>
-					<PageHeader title={formTitle} subtitle={formSubTitle} />
-					<Stepper activeStep={activeStep} alternativeLabel>
-						{steps.map((label) => (
-							<Step key={label}>
-								<StepLabel>{label}</StepLabel>
-							</Step>
-						))}
-					</Stepper>
-					<Box mt={5}>
-						{activeStep === 0 && (
-							<Box key="step-0" display="flex" flexDirection="column" rowGap={"20px"} width={"100%"}>
-								<Box>
-									<Typography variant="body1" fontWeight={"bold"}>
-										Equipment Details{" "}
-										<span
-											style={{
-												fontSize: "10px",
-												fontStyle: "itallic",
-												color: "gray",
-												ml: "5px",
-											}}>
-											- Optional
-										</span>
-									</Typography>
-									<Typography variant="body2">Add basic equipment details</Typography>
-								</Box>
-								{error && (
-									<Alert severity="error" sx={{ width: "100%", mb: 2 }}>
-										{error}
-									</Alert>
-								)}
-								<Box display="flex" alignItems="center">
-									<Box width="200px" minWidth="200px">
+					<Box
+						sx={{
+							flexGrow: 1,
+							overflowY: "auto",
+							px: drawerForm ? 3 : 0,
+							py: 1,
+							minHeight: 0, // Required to ensure flexGrow + overflow works properly
+						}}>
+						<PageHeader title={formTitle} subtitle={formSubTitle} />
+						{error && (
+							<Alert severity="error" sx={{ width: "100%", my: 2 }}>
+								{error}
+							</Alert>
+						)}
+						<Stepper activeStep={activeStep} alternativeLabel>
+							{steps.map((step, index) => (
+								<Step key={step.label}>
+									<StepLabel>
 										<Typography variant="body1" fontWeight={"bold"}>
-											Equipment Name: <span style={{ color: "red" }}>*</span>
+											{step.label}
+											{!step.required && (
+												<span
+													style={{
+														fontSize: "10px",
+														fontStyle: "itallic",
+														color: "gray",
+														ml: "5px",
+													}}>
+													- Optional
+												</span>
+											)}
 										</Typography>
-									</Box>
-									<TextField
-										size="small"
+										<Typography variant="body2" fontSize={"11px"} color="text.secondary">
+											{step.description}
+										</Typography>
+									</StepLabel>
+								</Step>
+							))}
+						</Stepper>
+
+						<Box sx={{ mt: 3 }}>
+							{activeStep === 0 && (
+								<Box key="step-0" display="flex" flexDirection="column" rowGap={"20px"} width={"100%"}>
+									<FormField
+										type={"text"}
+										label={"Equipment Name"}
+										showRequired={true}
 										name="equipmentName"
 										value={formData.equipmentName}
 										onChange={handleFormChange}
-										sx={{ width: "100%" }}
 										error={formErrors.equipmentName}
+										inputRef={textFieldRef}
 									/>
-								</Box>
 
-								<Box display="flex" alignItems="center">
-									<Box width="200px" minWidth="200px">
-										<Typography variant="body1" fontWeight={"bold"}>
-											Equipment Parent:
-										</Typography>
-									</Box>
-									<Autocomplete
-										options={["--- Top Level ---", "Parent A", "Parent B"]}
-										value={formData.equipmentParent || "--- Top Level ---"}
-										onChange={(event, newValue) =>
-											handleFormChange({
-												target: { name: "equipmentParent", value: newValue },
-											})
-										}
-										sx={{ width: "100%" }}
-										renderInput={(params) => (
-											<TextField
-												{...params}
-												size="small"
-												sx={{
-													width: "100%",
-													"& .MuiAutocomplete-root": {
-														width: "100%",
-													},
-												}}
-											/>
-										)}
-									/>
-								</Box>
-
-								{/* Equipment Image */}
-								<Box display="flex" alignItems="center">
-									<Box width="200px" minWidth="200px">
-										<Typography variant="body1" fontWeight={"bold"}>
-											Equipment Image:{" "}
-										</Typography>
-									</Box>
-									<Button
-										variant="outlined"
-										component="label"
-										startIcon={<UploadFileIcon />}
-										sx={{ width: "100%" }}>
-										Upload
-										<input
-											type="file"
-											hidden
-											name="equipmentImage"
-											accept=".jpg,.jpeg,.png"
-											onChange={handleImageChange}
-										/>
-									</Button>
-								</Box>
-								{equipmentImage && (
 									<Box display="flex" alignItems="center">
 										<Box width="200px" minWidth="200px">
 											<Typography variant="body1" fontWeight={"bold"}>
-												Uploaded Image:{" "}
+												Equipment Parent:
 											</Typography>
 										</Box>
-										<Box width="100%" minWidth="200px">
-											<Typography
-												variant="body1"
-												color="text.secondary"
-												fontStyle={"italic"}
-												fontSize={"11px"}>
-												{equipmentImage ? equipmentImage.name : "No Image Added"}
-											</Typography>
-										</Box>
+										<Autocomplete
+											options={eqList}
+											value={formData.equipmentParent}
+											isOptionEqualToValue={(option, value) => option.id === value.id}
+											onChange={(event, newValue) =>
+												handleFormChange({
+													target: { name: "equipmentParent", value: newValue },
+												})
+											}
+											getOptionLabel={(option) => option.label || ""}
+											sx={{ width: "100%" }}
+											renderInput={(params) => <TextField {...params} size="small" />}
+										/>
 									</Box>
-								)}
-								<Divider flexItem variant="middle" sx={{ my: "10px" }} />
-								{/* Internal Notes */}
-								<Box display="flex" flexDirection={"column"} alignItems="flex-start">
-									<Box width="150px" mb={1.5}>
-										<Typography variant="body1" fontWeight={"bold"}>
-											Internal Notes
-										</Typography>
-									</Box>
-									<TextField
-										name="internalNotes"
-										multiline
-										rows={4}
+
+									<FormField
+										type={"textarea"}
+										label={"Internal Notes"}
+										name={"internalNotes"}
 										value={formData.internalNotes}
+										error={formErrors.internalNotes}
 										onChange={handleFormChange}
-										sx={{ width: "100%" }}
+									/>
+									<Box display="flex" alignItems="center">
+										<Box width="200px" minWidth="200px">
+											<Typography variant="body1" fontWeight={"bold"}>
+												Equipment Image:{" "}
+											</Typography>
+										</Box>
+										<Button
+											variant="outlined"
+											component="label"
+											startIcon={<CloudUploadIcon />}
+											sx={{ width: "150px" }}>
+											Upload Image
+											<input
+												type="file"
+												hidden
+												name="equipmentImage"
+												accept=".jpg,.jpeg,.png"
+												onChange={handleImageChange}
+											/>
+										</Button>
+									</Box>
+
+									{equipmentImage && (
+										<Box display="flex" alignItems="center">
+											<Box width="200px" minWidth="200px">
+												<Typography variant="body1" fontWeight={"bold"}>
+													Uploaded Image:{" "}
+												</Typography>
+											</Box>
+											<Box width="100%" minWidth="200px">
+												<Typography
+													variant="body1"
+													color="text.secondary"
+													fontStyle={"italic"}
+													fontSize={"11px"}>
+													{equipmentImage ? equipmentImage.name : "No Image Added"}
+												</Typography>
+											</Box>
+										</Box>
+									)}
+
+									<Divider flexItem sx={{ my: "10px" }} />
+
+									<FormField
+										type={"select"}
+										label={"Status"}
+										name={"status"}
+										value={formData.status}
+										error={formErrors.status}
+										onChange={handleFormChange}
+										showRequired
+										options={[
+											{ value: "0", label: "Inactive" },
+											{ value: "1", label: "Active" },
+										]}
+									/>
+
+									<FormField
+										type={"select"}
+										label={"Public"}
+										name={"isPublic"}
+										value={formData.isPublic ?? ""}
+										onChange={handleFormChange}
+										error={formErrors.isPublic}
+										showRequired
+										options={[
+											{ value: "true", label: "Public" },
+											{ value: "false", label: "Private" },
+										]}
 									/>
 								</Box>
-							</Box>
-						)}
+							)}
 
-						{activeStep === 1 && (
-							<Box key="step-1">
-								<Box sx={{ mb: 2 }}>
-									<Typography variant="body1" fontWeight={"bold"}>
-										Document Provisioning{" "}
-										<span
-											style={{
-												fontSize: "10px",
-												fontStyle: "itallic",
-												color: "gray",
-												ml: "5px",
-											}}>
-											- Optional
-										</span>
-									</Typography>
-									<Typography variant="body2">
-										Add/Assign Documents to the Equipment {formData.equipmentName}
-									</Typography>
-								</Box>
-								<CustomDatagrid
-									data={documents}
-									columns={columns_doc}
-									rowIdField="id"
-									onSelect={handleDocRowSelect}
-									rowClick={true}
-									onRowClick={handleDocRowClick}
-									pageSize={10}
-									pageSizeOptions={[5, 10, 25, 50]}
-									checkboxSelection={true}
-									showMore={false}
-									showActions={false}
-									selectedRowIds={formData.doc_ids}
-								/>
-							</Box>
-						)}
-
-						{activeStep === 2 && (
-							<Box key="step-2">
-								<Box sx={{ ...flexRow, justifyContent: "space-between", mb: 3 }}>
-									<Box sx={{ width: "60%" }}>
-										<Typography variant="body1" fontWeight={"bold"}>
-											Provision Equipment{" "}
-											<span
-												style={{
-													fontSize: "10px",
-													fontStyle: "itallic",
-													color: "gray",
-													ml: "5px",
-												}}>
-												- Optional
-											</span>
-										</Typography>
-										<Typography variant="body2">
-											You can provision the Equipment {formData.equipmentName} to the Customers
-										</Typography>
-									</Box>
-									<Button
-										variant="outlined"
-										startIcon={<AddIcon />}
-										onClick={handleAddProvision}
-										sx={{ alignSelf: "flex-start" }}>
-										Provision New Equipment
-									</Button>
-								</Box>
-								{formData.provisions.map((item, index) => (
-									<React.Fragment key={index}>
+							{activeStep === 1 && (
+								<Box key="step-1" sx={{ px: 1 }}>
+									<Box
+										mb={1}
+										display={"flex"}
+										flexDirection={"row"}
+										alignItems={"flex-start"}
+										justifyContent={"space-between"}>
+										<Box>
+											<Typography variant="body1" fontWeight={"bold"}>
+												Provision Documents
+											</Typography>
+											<Typography variant="body1" color="text.secondary" fontSize={"11px"}>
+												You can Add / Provision documents for this equipment
+											</Typography>
+										</Box>
 										<Box
 											sx={{
-												display: "flex",
+												...flexRow,
+												justifyContent: "flex-start",
+												columnGap: "5px",
 												alignItems: "center",
-												width: "100%",
-												gap: "10px",
-												mb: 2,
-												p: 2,
-												flexWrap: "nowrap", // ensure no wrap
 											}}>
-											{/* Provisioned Date */}
-											<DatePicker
-												label="Provisioned Date"
-												value={item.provisionedDate}
-												onChange={(newValue) =>
-													handleProvisionChange(index, "provisionedDate", moment(newValue))
-												}
-												slotProps={{ textField: { size: "small" } }}
-												sx={{ flex: 1, minWidth: 130 }}
-											/>
-
-											{/* Customer */}
-											<Autocomplete
-												size="small"
-												value={item.customer}
-												onChange={(_, value) => handleProvisionChange(index, "customer", value)}
-												options={customersList}
-												getOptionLabel={(option) => option?.label || ""}
-												renderInput={(params) => (
-													<TextField {...params} label="Customer" size="small" />
-												)}
-												sx={{ flex: 1, minWidth: 150 }}
-											/>
-
-											{/* Site */}
-											<Autocomplete
-												size="small"
-												value={item.site}
-												onChange={(_, value) => handleProvisionChange(index, "site", value)}
-												options={item.customer ? getFilteredSites(item.customer.id) : []}
-												getOptionLabel={(option) => option?.label || ""}
-												renderInput={(params) => (
-													<TextField {...params} label="Site" size="small" />
-												)}
-												sx={{ flex: 1, minWidth: 150 }}
-											/>
-
-											{/* Serial Number */}
-											<TextField
-												label="Serial Number"
-												value={item.serialNumber}
-												onChange={(e) =>
-													handleProvisionChange(index, "serialNumber", e.target.value)
-												}
-												size="small"
-												sx={{ flex: 1, minWidth: 130 }}
-											/>
-
-											{/* Delete */}
-											<IconButton
-												onClick={() => handleDeleteProvision(index)}
-												color="error"
-												sx={{ flexShrink: 0 }}>
-												<DeleteIcon />
-											</IconButton>
+											<Button
+												variant="outlined"
+												component="label"
+												startIcon={<AddIcon />}
+												onClick={() => {
+													setDocFormOpen(true);
+													setSelectExisting(false);
+												}}>
+												Add New Document
+											</Button>
+											<Button
+												variant="outlined"
+												component="label"
+												startIcon={<LibraryAddCheckIcon />}
+												onClick={() => {
+													setDocFormOpen(true);
+													setSelectExisting(true);
+												}}>
+												Select Existing Documents
+											</Button>
 										</Box>
+									</Box>
 
-										{/* Divider after all but last */}
-										{index < formData.provisions.length - 1 && <Divider sx={{ mb: 2 }} />}
-									</React.Fragment>
-								))}
-							</Box>
-						)}
+									{formData.documents.length > 0 ? (
+										formData.documents.map((doc) => (
+											<>
+												<Box>
+													<DocumentCard
+														data={doc}
+														showCategory={true}
+														showDelete={true}
+														handleRemove={handleRemoveDocuments}
+														key={`${doc.title}_${doc.id}`}
+													/>
+												</Box>
+											</>
+										))
+									) : (
+										<Alert severity="info" sx={{ width: "100%" }}>
+											No Provisioned Documents
+										</Alert>
+									)}
+
+									{moveAlert && (
+										<Alert severity="info" sx={{ width: "100%", mt: 2 }}>
+											Some assigned documents are removed as the are inherited from the Parent.
+										</Alert>
+									)}
+
+									{parentEqDocs.length > 0 && (
+										<Box
+											display="flex"
+											flexDirection="column"
+											justifyContent="flex-start"
+											alignItems="flex-start"
+											width="100%"
+											mt={2}>
+											<Box mb={2}>
+												<Typography variant="body1" fontWeight={"bold"}>
+													Parent Equipment Documents
+												</Typography>
+												<Typography
+													variant="body1"
+													fontSize={"11px"}
+													color="text.secondary"
+													m={0}>
+													List of all the documents inherited from the parent equipment
+												</Typography>
+											</Box>
+											{parentEqDocs.map((category, index) => {
+												const panelId = `parent-${index}`;
+												return (
+													<Accordion
+														key={panelId}
+														sx={{ width: "100%" }}
+														expanded={expanded === panelId}
+														onChange={handleAccordianChange(panelId)}>
+														<AccordionSummary
+															expandIcon={<ExpandMoreIcon />}
+															aria-controls={`${panelId}-content`}
+															id={`${panelId}-header`}>
+															<Typography variant="body1" fontWeight="bold">
+																{category.category_name}
+															</Typography>
+														</AccordionSummary>
+														<AccordionDetails>
+															{category.docs.map((doc) => (
+																<>
+																	<Box>
+																		<DocumentCard
+																			data={doc}
+																			showCategory={false}
+																			showDelete={false}
+																			key={`${doc.title}_${doc?.kb_id}`}
+																			origin="equipment"
+																		/>
+																	</Box>
+																</>
+															))}
+														</AccordionDetails>
+													</Accordion>
+												);
+											})}
+										</Box>
+									)}
+								</Box>
+							)}
+
+							{activeStep === 2 && (
+								<Box
+									key="step-2"
+									display="flex"
+									flexDirection="column"
+									minHeight={"475px"}
+									sx={{ px: 1 }}>
+									<Box sx={{ ...flexRow, justifyContent: "space-between", mb: 1 }}>
+										<Box sx={{ width: "60%" }}>
+											<Typography variant="body1" fontWeight={"bold"}>
+												Provision Equipment{" "}
+												<span
+													style={{
+														fontSize: "10px",
+														fontStyle: "itallic",
+														color: "gray",
+														ml: "5px",
+													}}>
+													- Optional
+												</span>
+											</Typography>
+											<Typography variant="body2" fontSize={"11px"} color="text.secondary">
+												You can provision this equipment to the Customers
+											</Typography>
+										</Box>
+										<Button
+											variant="outlined"
+											startIcon={<AddIcon />}
+											// onClick={handleAddProvision}
+											onClick={() => {
+												setProvisionFormOpen(true);
+												setError("");
+											}}
+											sx={{ alignSelf: "flex-start" }}>
+											Add Provision
+										</Button>
+									</Box>
+
+									{formData.provisions.length <= 0 ? (
+										<Alert severity="info" sx={{ width: "100%" }}>
+											No Equipments Provisioned
+										</Alert>
+									) : (
+										<>
+											<Typography variant="body1" fontWeight={"bold"} mb={1}>
+												Following Equipments will be provisioned to this customer:{" "}
+											</Typography>
+											{formData.provisions.map((prov) => (
+												<ProvisionFormCard data={prov} handleRemove={handleRemoveProvisions} />
+											))}
+										</>
+									)}
+								</Box>
+							)}
+						</Box>
 					</Box>
-				</Box>
 
-				{/* Bottom navigation buttons */}
-				<Box mt={1} p={useDrawer ? 2 : 0} display="flex" justifyContent="space-between">
-					<Button disabled={activeStep === 0} onClick={handleBack}>
-						Back
-					</Button>
-					<Box sx={{ ...flexRow, columnGap: "10px" }}>
-						<Button onClick={handleCloseForm} variant="outlined">
-							Cancel
+					{/* Bottom navigation buttons */}
+					<Box mt={1} p={drawerForm ? 2 : 0} display="flex" justifyContent="space-between">
+						<Button disabled={activeStep === 0} onClick={handleBack}>
+							Back
 						</Button>
+						<Box sx={{ ...flexRow, columnGap: "10px" }}>
+							<Button onClick={handleCloseForm} variant="outlined">
+								Cancel
+							</Button>
 
-						{activeStep === steps.length - 1 ? (
-							<Button variant="contained" onClick={handleFinish} disabled={isSubmitting}>
-								{formTitle}
-							</Button>
-						) : (
-							<Button variant="contained" onClick={handleNext}>
-								Next
-							</Button>
-						)}
+							{activeStep === steps.length - 1 ? (
+								<Button
+									loading={isSubmitting}
+									loadingPosition="start"
+									variant="contained"
+									onClick={handleFinish}
+									disabled={isSubmitting}>
+									{isEditing ? "Update Equipment" : formTitle}
+								</Button>
+							) : (
+								<Button variant="contained" onClick={handleNext}>
+									Next
+								</Button>
+							)}
+						</Box>
 					</Box>
 				</Box>
-			</Box>
-		</LocalizationProvider>
+			</LocalizationProvider>
+
+			<Drawer anchor={"right"} sx={{ width: "45vw" }} open={docFormOpen}>
+				{selectExisting ? (
+					<DocumentsSelectionForm
+						formOpen={docFormOpen}
+						setFormOpen={setDocFormOpen}
+						setCategoryFormData={setFormData}
+						categoryFormData={formData}
+						selectedCategory={formData.equipmentName}
+						origin="equipment"
+					/>
+				) : (
+					<DocumentsForm formOpen={docFormOpen} setFormOpen={setDocFormOpen} setEqFormData={setFormData} />
+				)}
+			</Drawer>
+
+			<Drawer anchor={"right"} sx={{ width: "45vw" }} open={provisionFormOpen}>
+				<ProvisionForm
+					formOpen={provisionFormOpen}
+					setFormOpen={setProvisionFormOpen}
+					setParentData={setFormData}
+					showCustomer={true}
+					showEquipment={false}
+					createProvision={false}
+					showStaticCustomer={false}
+					showStaticEquipment={true}
+					customerName={formData?.customer_name || ""}
+					equipmentName={formData?.equipmentName || ""}
+					customerSites={formData?.sites || ""}
+				/>
+			</Drawer>
+		</>
 	);
 };
 

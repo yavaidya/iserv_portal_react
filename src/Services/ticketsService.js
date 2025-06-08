@@ -1,4 +1,4 @@
-import customHttp from "./customHTTP";
+import customHttp from "../Utilities/customHTTP";
 
 export const fetchTicketsService = async (req_body) => {
 	try {

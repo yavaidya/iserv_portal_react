@@ -8,11 +8,9 @@ import { useAuth } from "../../Context/AuthContext";
 import "./Profile.css";
 import ProfileLoginForm from "../../Components/ProfileLoginForm/ProfileLoginForm";
 import RichTextEditor from "../../Components/RichTextEditor/RichTextEditor";
+import TabPanel from "../../Components/TabPanel/TabPanel";
 
-const TabPanel = ({ children, value, index }) => {
-	if (value !== index) return null;
-	return <Box p={2}>{children}</Box>;
-};
+
 
 const Profile = () => {
 	const { setActiveTitle } = usePageTitle();

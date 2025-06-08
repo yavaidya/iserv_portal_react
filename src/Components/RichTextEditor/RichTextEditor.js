@@ -2,7 +2,13 @@ import React, { useRef, useMemo, useState } from "react";
 import JoditEditor from "jodit-react";
 import { Box, Typography } from "@mui/material";
 
-const RichTextEditor = ({ value, onChange, readOnly = false, height = "250px" }) => {
+const RichTextEditor = ({
+	value,
+	onChange,
+	readOnly = false,
+	height = "250px",
+	placeholder = "Details on the reason(s) for opening the ticket...",
+}) => {
 	const editor = useRef(null);
 	const [content, setContent] = useState(value || "");
 
@@ -26,7 +32,7 @@ const RichTextEditor = ({ value, onChange, readOnly = false, height = "250px" })
 			showCharsCounter: false,
 			showWordsCounter: false,
 			showXPathInStatusbar: false,
-			placeholder: "Details on the reason(s) for opening the ticket...",
+			placeholder,
 			buttons: [
 				"bold",
 				"italic",

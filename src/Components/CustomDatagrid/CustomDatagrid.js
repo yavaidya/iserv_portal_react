@@ -22,6 +22,7 @@ import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import BackupTableIcon from "@mui/icons-material/BackupTable";
 import DeleteIcon from "@mui/icons-material/Delete";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
+import Swal from "sweetalert2";
 const options = [
 	{ text: "Delete", icon: <DeleteIcon /> },
 	{ text: "Export", icon: <FileUploadIcon /> },
@@ -47,6 +48,9 @@ const CustomDatagrid = ({
 		type: "include",
 		ids: new Set(),
 	},
+	handleEdit = null,
+	handleDuplicate = null,
+	handleDelete = null,
 }) => {
 	const [searchText, setSearchText] = useState("");
 	const [filteredData, setFilteredData] = useState(data);
@@ -60,6 +64,7 @@ const CustomDatagrid = ({
 	const [open, setOpen] = useState(false);
 	const anchorRef = useRef(null);
 	const [selectedIndex, setSelectedIndex] = useState(0);
+	const [loading, setLoading] = useState(true);
 
 	const handleSelectionChange = (e) => {
 		console.log("SelectedIDs: ", e);
@@ -68,15 +73,21 @@ const CustomDatagrid = ({
 		}
 	};
 
-	// useEffect(() => {
-	// 	setFilteredData(data);
-	// }, [data, selectedRowIds]);
+	useEffect(() => {
+		if (filteredData.length <= 0) {
+			setLoading(true);
+		} else {
+			setLoading(false);
+		}
+	}, [filteredData]);
 
 	useEffect(() => {
-		setFilteredData(data);
-		// if (data.length > 0) {
-		// 	setRowSelectionModel(selectedRowIds);
-		// }
+		if (data.length <= 0) {
+			setLoading(true);
+		} else {
+			setFilteredData(data);
+			setLoading(false);
+		}
 	}, [data]);
 
 	// Handle search change
@@ -122,6 +133,24 @@ const CustomDatagrid = ({
 		setOpen(false);
 	};
 
+	const handleDeleteHelper = (row) => {
+		Swal.fire({
+			icon: "info",
+			title: "Confirm",
+			text: "Are you sure, you want to delete?",
+			showDenyButton: true,
+			confirmButtonText: "Confirm",
+			denyButtonText: `Cancel`,
+		}).then((result) => {
+			if (result.isConfirmed) {
+				console.log(row);
+				if (handleDelete) {
+					handleDelete(row);
+				}
+			}
+		});
+	};
+
 	// const sortedData = [...filteredData].sort((a, b) => {
 	// 	const aSelected = rowModel.includes(a[rowIdField]);
 	// 	const bSelected = rowModel.includes(b[rowIdField]);
@@ -139,17 +168,45 @@ const CustomDatagrid = ({
 			renderCell: (params) => (
 				<div>
 					<Tooltip title="Edit">
-						<IconButton color="primary" aria-label="Actions" size="small" onClick={null}>
+						<IconButton
+							color="primary"
+							aria-label="Actions"
+							size="small"
+							onClick={(e) => {
+								e.preventDefault();
+								e.stopPropagation();
+								if (handleEdit) {
+									handleEdit(params.row);
+								}
+							}}>
 							<EditRoundedIcon />
 						</IconButton>
 					</Tooltip>
-					<Tooltip title="Edit">
-						<IconButton color="primary" aria-label="Actions" size="small" onClick={null}>
+					<Tooltip title="Duplicate">
+						<IconButton
+							color="primary"
+							aria-label="Actions"
+							size="small"
+							onClick={(e) => {
+								e.preventDefault();
+								e.stopPropagation();
+								if (handleDuplicate) {
+									handleDuplicate(params.row);
+								}
+							}}>
 							<ContentCopyOutlinedIcon />
 						</IconButton>
 					</Tooltip>
-					<Tooltip title="Edit">
-						<IconButton color="primary" aria-label="Actions" size="small" onClick={null}>
+					<Tooltip title="Delete">
+						<IconButton
+							color="primary"
+							aria-label="Actions"
+							size="small"
+							onClick={(e) => {
+								e.preventDefault();
+								e.stopPropagation();
+								handleDeleteHelper(params.row);
+							}}>
 							<DeleteRoundedIcon />
 						</IconButton>
 					</Tooltip>
@@ -265,6 +322,7 @@ const CustomDatagrid = ({
 			{/* DataGrid */}
 			<div style={{ width: "100%", height: "inherit" }}>
 				<DataGrid
+					loading={loading}
 					rows={filteredData}
 					columns={showActions ? [...columns, ...actions] : columns}
 					initialState={{

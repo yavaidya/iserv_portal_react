@@ -8,6 +8,8 @@ import { useCustomTheme } from "../../Context/ThemeContext";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import DeleteIcon from "@mui/icons-material/Delete";
 import moment from "moment";
+import AddCircleIcon from "@mui/icons-material/AddCircle";
+
 const Agents = () => {
 	const { setActiveTitle } = usePageTitle();
 	const { flexCol, flexRow } = useCustomTheme();
@@ -116,17 +118,10 @@ const Agents = () => {
 
 	const customButtons = [
 		{
-			label: "Add New Agent",
-			icon: <AddCircleOutlineIcon />,
+			label: "Agent",
+			icon: <AddCircleIcon />,
 			onClick: () => {
 				console.log("Adding");
-			},
-		},
-		{
-			label: "Delete Selected",
-			icon: <DeleteIcon />,
-			onClick: () => {
-				console.log("Deleting");
 			},
 		},
 	];

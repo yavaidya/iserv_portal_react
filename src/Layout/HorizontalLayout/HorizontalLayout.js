@@ -20,6 +20,9 @@ import CustomerUsers from "../../Pages/CustomerUsers/CustomerUsers";
 import Tickets from "../../Pages/Tickets/Tickets";
 import Equipments from "../../Pages/Equipments/Equipments";
 import Agents from "../../Pages/Agents/Agents";
+import EquipmentDetails from "../../Pages/EquipmentDetails/EquipmentDetails";
+import DocumentCategories from "../../Pages/DocumentCategories/DocumentCategories";
+import Documents from "../../Pages/Documents/Documents";
 const HorizontalLayout = () => {
 	const { userMode } = useAuth();
 	const { flexCol, flexRow } = useCustomTheme();
@@ -107,12 +110,11 @@ const HorizontalLayout = () => {
 										mx: 3,
 										ml: 4,
 										mb: 3,
-										pt: 1,
+										pt: 2,
+										px: 1,
 										borderRadius: 2,
 										boxShadow: "0 0 20px 0px rgba(0,0,0,0.1)",
 										minHeight: "400px",
-										// border: "1px solid",
-										// borderColor: (theme) => theme.palette.customBorder,
 									}}>
 									<Routes>
 										{/* {dynamicRoutes.map(({ path, component }) => (
@@ -122,7 +124,10 @@ const HorizontalLayout = () => {
 										<Route path="/settings" element={<ThemeCustomizer />} />
 										<Route path="/profile" element={<Profile />} />
 										<Route path="/customers" element={<Customers />} />
+										<Route path="/document-categories" element={<DocumentCategories />} />
+										<Route path="/documents" element={<Documents />} />
 										<Route path="/equipments" element={<Equipments />} />
+										<Route path="/equipments/:eq_id" element={<EquipmentDetails />} />
 										<Route path="/staff" element={<Agents />} />
 										<Route path="/tickets" element={<Tickets />} />
 										<Route path="/users" element={<CustomerUsers />} />

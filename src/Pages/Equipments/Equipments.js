@@ -24,6 +24,11 @@ import { useCallback } from "react";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import EquipmentForm from "../../Components/EquipmentForm/EquipmentForm";
 import moment from "moment";
+import { useNavigate } from "react-router-dom";
+import LoadingWrapper from "../../Components/LoadingWrapper/LoadingWrapper";
+import ErrorAlertWrapper from "../../Components/ErrorAlertWrapper/ErrorAlertWrapper";
+import { formatDate } from "../../Services/globalServiceUtils";
+import EntityWrapper from "../../Components/EntityWrapper/EntityWrapper";
 
 const Equipments = () => {
 	const [activeStep, setActiveStep] = useState(0);
@@ -32,30 +37,26 @@ const Equipments = () => {
 	const [equipments, setEquipments] = useState([]);
 	const [error, setError] = useState(null);
 	const [loading, setLoading] = useState(true);
+	const [isEditing, setIsEditing] = useState(false);
 	const [eqFormOpen, setEqFormOpen] = useState(false);
 	const [formData, setFormData] = useState({
 		equipmentName: "",
-		equipmentParent: "",
+		equipmentParent: { id: 0, label: "-- Top Level --" },
 		internalNotes: "",
-		doc_ids: {
-			type: "include",
-			ids: new Set(),
-		},
-		provisions: [
-			{
-				customer: null,
-				site: null,
-				provisionedDate: moment(), // today
-				serialNumber: "",
-			},
-		],
+		isPublic: true,
+		status: "0",
+		documents: [],
+		provisions: [],
+		selected_doc_ids: [],
+		parent_doc_ids: [],
 	});
+	const [selectedEqId, setSelectedEqId] = useState(null);
 	const [formTitle, setFormTitle] = useState("");
 	const [formSubTitle, setFormSubTitle] = useState("");
 	const [useDrawer, setUseDrawer] = useState(true);
 	const [documents, setDocuments] = useState([]);
 	const steps = ["Equipment Details", "Documents Provisioning", "Customer(s) Provision"];
-
+	const navigate = useNavigate();
 	const handleOpenForm = () => {
 		setEqFormOpen(true);
 	};
@@ -74,6 +75,9 @@ const Equipments = () => {
 					provisions: equipment?.org_provisioned_eqs?.length || 0,
 					created: equipment.createdAt,
 					updated: equipment.updatedAt,
+					parent_id: equipment?.parent_equipment?.eq_id || 0,
+					parent_name: equipment?.parent_equipment?.equipment || "-- Top Level --",
+					data: equipment,
 				}));
 				setEquipments(equipmentsData);
 				setLoading(false);
@@ -107,27 +111,41 @@ const Equipments = () => {
 
 	const handleRowClick = (params) => {
 		console.log("Row clicked:", params.row);
+		navigate(`/equipments/${params.row.id}`);
 	};
 
-	function formatDate(isoString) {
-		const date = new Date(isoString);
-
-		const day = String(date.getDate()).padStart(2, "0");
-		const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-based
-		const year = date.getFullYear();
-
-		const hours = String(date.getHours()).padStart(2, "0");
-		const minutes = String(date.getMinutes()).padStart(2, "0");
-		const seconds = String(date.getSeconds()).padStart(2, "0");
-
-		return `${month}-${day}-${year} ${hours} ${minutes} ${seconds}`;
-	}
+	const handleEdit = (row) => {
+		console.log("Selected Eq: ", row);
+		setIsEditing(true);
+		let docids = [];
+		if (row.data.eq_docs && row.data.eq_docs.length > 0) {
+			docids = row.data.eq_docs.map((d) => d?.kb_id || 0);
+		} else {
+			docids = [];
+		}
+		setFormData({
+			equipmentName: row.name,
+			equipmentParent: { id: row.parent_id, label: row.parent_name },
+			internalNotes: "",
+			isPublic: true,
+			status: "0",
+			documents: docids,
+			doc_ids: {
+				type: "include",
+				ids: new Set(),
+			},
+			provisions: [],
+		});
+		setSelectedEqId(parseInt(row.id));
+		handleOpenForm();
+	};
 
 	const customButtons = [
 		{
 			label: "Equipment",
 			icon: <AddCircleIcon />,
 			onClick: () => {
+				setIsEditing(false);
 				handleOpenForm();
 			},
 		},
@@ -139,7 +157,7 @@ const Equipments = () => {
 			headerName: "Equipment Name",
 			flex: 1,
 			renderCell: (params) => (
-				<Tooltip title="View User Details">
+				<Tooltip title="View Equipment Details">
 					<span
 						style={{
 							cursor: "pointer",
@@ -158,7 +176,8 @@ const Equipments = () => {
 			width: 150,
 			align: "center",
 			headerAlign: "center",
-			renderCell: (params) => (params.value === 1 ? <span>Active</span> : <span>Inactive</span>),
+			renderCell: (params) =>
+				params.value === "1" || params.value === 1 ? <span>Active</span> : <span>Inactive</span>,
 		},
 		{
 			field: "provisions",
@@ -192,70 +211,46 @@ const Equipments = () => {
 	];
 
 	if (loading) {
-		return (
-			<Box sx={{ ...flexCol, justifyContent: "center", alignItems: "center", minHeight: "300px", width: "100%" }}>
-				<CircularProgress />
-			</Box>
-		);
+		return <LoadingWrapper minHeight={"400px"} />;
 	}
 
 	if (error && !loading) {
-		return (
-			<Box sx={{ ...flexCol, justifyContent: "center", alignItems: "center", minHeight: "300px", width: "100%" }}>
-				<Alert severity="error">{error}</Alert>
-			</Box>
-		);
+		return <ErrorAlertWrapper minHeight={"400px"} error={error} />;
 	}
 	return (
 		<>
-			<Box p={3} px={5} width={"100%"}>
-				{useDrawer && (
-					<>
-						{/* Show DataGrid in background */}
-						<CustomDatagrid
-							data={equipments}
-							columns={columns}
-							rowIdField="id"
-							onSelect={handleRowSelect}
-							rowClick={true}
-							onRowClick={handleRowClick}
-							pageSize={10}
-							pageSizeOptions={[5, 10, 25, 50]}
-							checkboxSelection={true}
-							customButtons={customButtons}
-						/>
-
-						{/* Stepper form in Drawer */}
-						<Drawer anchor={"right"} sx={{ width: "45vh" }} open={eqFormOpen}>
-							<EquipmentForm
-								formOpen={eqFormOpen}
-								setFormOpen={setEqFormOpen}
-								useDrawer={useDrawer}
-								setUseDrawer={setUseDrawer}
-								formData={formData}
-								setFormData={setFormData}
-								activeStep={activeStep}
-								setActiveStep={setActiveStep}
-							/>
-						</Drawer>
-					</>
-				)}
-
-				{eqFormOpen && !useDrawer && (
-					<Box sx={{ minHeight: "600px" }}>
-						<EquipmentForm
-							formOpen={eqFormOpen}
-							setFormOpen={setEqFormOpen}
-							useDrawer={useDrawer}
-							setUseDrawer={setUseDrawer}
-							formData={formData}
-							setFormData={setFormData}
-							activeStep={activeStep}
-							setActiveStep={setActiveStep}
-						/>
-					</Box>
-				)}
-			</Box>
+			<EntityWrapper
+				title={"Equipments"}
+				subtitle={"List of all the Equipments"}
+				data={equipments}
+				setData={setEquipments}
+				columns={columns}
+				rowIdField="id"
+				onSelect={handleRowSelect}
+				rowClick={true}
+				onRowClick={handleRowClick}
+				checkboxSelection={true}
+				customButtons={customButtons}
+				handleEdit={handleEdit}
+				handleDelete={null}
+				handleDuplicate={null}
+				sortBy={[{ field: "created", sort: "desc" }]}
+				formProps={{
+					isEditing: isEditing,
+					formOpen: eqFormOpen,
+					setFormOpen: setEqFormOpen,
+					useDrawer: useDrawer,
+					setUseDrawer: setUseDrawer,
+					formData: formData,
+					setFormData: setFormData,
+					activeStep: activeStep,
+					setActiveStep: setActiveStep,
+					fetchEquipments: fetchEquipments,
+					equipments: equipments,
+					selectedEqId: selectedEqId,
+				}}
+				FormComponent={EquipmentForm}
+			/>
 		</>
 	);
 };

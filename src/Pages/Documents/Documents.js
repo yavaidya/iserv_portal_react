@@ -1,20 +1,22 @@
 import React, { useEffect, useState } from "react";
 import { usePageTitle } from "../../Context/PageTitleContext";
-import { Alert, Box, CircularProgress, Tooltip } from "@mui/material";
-import { fetchCustomersService, fetchCustomerUsersService } from "../../Services/customerService";
+import { Alert, Box, CircularProgress, Drawer, Tooltip } from "@mui/material";
+import CustomDatagrid from "../../Components/CustomDatagrid/CustomDatagrid";
 import { useCustomTheme } from "../../Context/ThemeContext";
+import { fetchDocumentsService } from "../../Services/documentService";
+import DocumentsForm from "../../Components/DocumentsForm/DocumentsForm";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
-import CustomerUserForm from "../../Components/CustomerUserForm/CustomerUserForm";
-import EntityWrapper from "../../Components/EntityWrapper/EntityWrapper";
-import { formatDate } from "../../Services/globalServiceUtils";
 import LoadingWrapper from "../../Components/LoadingWrapper/LoadingWrapper";
 import ErrorAlertWrapper from "../../Components/ErrorAlertWrapper/ErrorAlertWrapper";
+import { formatDate } from "../../Services/globalServiceUtils";
+import EntityWrapper from "../../Components/EntityWrapper/EntityWrapper";
 
-const CustomerUsers = () => {
+const Documents = () => {
 	const { setActiveTitle } = usePageTitle();
 	const { flexCol, flexRow } = useCustomTheme();
-	const [customerUsers, setCustomerUsers] = useState([]);
 	const [formOpen, setFormOpen] = useState(false);
+	const [useDrawer, setUseDrawer] = useState(true);
+	const [documents, setDocuments] = useState([]);
 	const [error, setError] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [isEditing, setIsEditing] = useState(false);
@@ -24,7 +26,7 @@ const CustomerUsers = () => {
 			headerName: "Name",
 			flex: 1,
 			renderCell: (params) => (
-				<Tooltip title="View User Details">
+				<Tooltip title="View Document">
 					<span
 						style={{
 							cursor: "pointer",
@@ -38,14 +40,24 @@ const CustomerUsers = () => {
 			),
 		},
 		{
-			field: "organization",
-			headerName: "Customer",
+			field: "category_name",
+			headerName: "Category Name",
+			width: 250,
+		},
+		{
+			field: "is_published",
+			headerName: "Status",
+			width: 250,
+		},
+		{
+			field: "attachment_count",
+			headerName: "# Documents",
 			width: 150,
 			align: "center",
 			headerAlign: "center",
 			renderCell: (params) =>
-				params.value === "" || !params.value ? (
-					<span style={{ fontSize: "10px", color: "gray" }}>No Customer Assigned</span>
+				params.value === 0 || !params.value ? (
+					<span style={{ fontSize: "10px", color: "gray" }}>No Attachments</span>
 				) : (
 					params.value
 				),
@@ -60,14 +72,13 @@ const CustomerUsers = () => {
 			renderCell: (params) => formatDate(params.value),
 		},
 	];
-
 	const handleOpenForm = () => {
 		setFormOpen(true);
 	};
 
 	const customButtons = [
 		{
-			label: "Customer User",
+			label: "Document",
 			icon: <AddCircleIcon />,
 			onClick: () => {
 				setIsEditing(false);
@@ -78,36 +89,43 @@ const CustomerUsers = () => {
 
 	useEffect(() => {
 		setActiveTitle({
-			title: "Customer Users",
-			subtitle: "List of all the Customer Users",
+			title: "Documents",
+			subtitle: "List of all the Documents",
 		});
-		fetchCustomerUsers();
+		fetchDocuments();
 	}, []);
 
-	const fetchCustomerUsers = async () => {
-		setLoading(true);
+	const fetchDocuments = async () => {
 		try {
-			const response = await fetchCustomerUsersService();
+			setLoading(true);
+			const response = await fetchDocumentsService();
 			if (response.status) {
-				console.log(response);
+				const docs = response.data.map((doc) => {
+					return {
+						kb_id: doc.kb_id,
+						name: doc.title,
+						category_id: doc.category_id,
+						category_name: doc?.category?.name || "",
+						is_published: doc.ispublished ? "Public" : "Private",
+						created: doc.createdAt,
+						attachment_count: doc.attachment ? 1 : 0,
+					};
+				});
+
+				setDocuments(docs);
 				setError(null);
-				const customerUserCounts = response.data.map((customer) => ({
-					id: customer.id,
-					name: customer.name,
-					organization: customer?.organization?.name || "",
-					created: customer.createdAt,
-				}));
-				setCustomerUsers(customerUserCounts);
 				setLoading(false);
+				console.log("Documents", response);
 			} else {
 				setError("Failed Fetching Customer Users");
-				setCustomerUsers([]);
+				setDocuments([]);
 				setLoading(false);
 			}
 		} catch (error) {
+			console.log(error);
 			setError("Failed Fetching Customer Users");
+			setDocuments([]);
 			setLoading(false);
-			setCustomerUsers([]);
 		}
 	};
 
@@ -120,21 +138,20 @@ const CustomerUsers = () => {
 	};
 
 	if (loading) {
-		return <LoadingWrapper minHeight={"300px"} />;
+		return <LoadingWrapper minHeight={"400px"} />;
 	}
 
 	if (error && !loading) {
-		return <ErrorAlertWrapper minHeight={"300px"} error={error} />;
+		return <ErrorAlertWrapper minHeight={"400px"} error={error} />;
 	}
-
 	return (
 		<EntityWrapper
-			title={"Customer Users"}
-			subtitle={"List of Users for the customers"}
-			data={customerUsers}
-			setData={setCustomerUsers}
+			title={"Documents"}
+			subtitle={"List of all the Documents"}
+			data={documents}
+			setData={setDocuments}
 			columns={columns}
-			rowIdField="id"
+			rowIdField="kb_id"
 			onSelect={handleRowSelect}
 			rowClick={true}
 			onRowClick={handleRowClick}
@@ -144,12 +161,12 @@ const CustomerUsers = () => {
 			formProps={{
 				formOpen: formOpen,
 				setFormOpen: setFormOpen,
-				setParentData: setCustomerUsers,
+				setParentData: setDocuments,
 				selectedRow: null,
 			}}
-			FormComponent={CustomerUserForm}
+			FormComponent={DocumentsForm}
 		/>
 	);
 };
 
-export default CustomerUsers;
+export default Documents;

@@ -7,15 +7,35 @@ import { error } from "jodit/esm/core/helpers";
 import { useCustomTheme } from "../../Context/ThemeContext";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import DeleteIcon from "@mui/icons-material/Delete";
-
-
+import AddCircleIcon from "@mui/icons-material/AddCircle";
+import LoadingWrapper from "../../Components/LoadingWrapper/LoadingWrapper";
+import ErrorAlertWrapper from "../../Components/ErrorAlertWrapper/ErrorAlertWrapper";
+import { formatDate } from "../../Services/globalServiceUtils";
+import CustomerForm from "../../Components/CustomerForm/CustomerForm";
+import EntityWrapper from "../../Components/EntityWrapper/EntityWrapper";
 
 const Customer = () => {
 	const { setActiveTitle } = usePageTitle();
 	const { flexCol, flexRow } = useCustomTheme();
 	const [customers, setCustomers] = useState([]);
+	const [cusFormOpen, setCusFormOpen] = useState(false);
+	const [selectedCusId, setSelectedCusId] = useState(null);
+	const [activeStep, setActiveStep] = useState(0);
+	const [cusFormData, setCusFormData] = useState({
+		customer_name: "",
+		phone: "",
+		website: "",
+		manager: "",
+		status: "1",
+		users: [],
+		sites: [],
+		provisions: [],
+		internalNotes: "",
+	});
+
 	const [error, setError] = useState(null);
 	const [loading, setLoading] = useState(true);
+	const [isEditing, setIsEditing] = useState(false);
 	const columns = [
 		{
 			field: "name",
@@ -59,17 +79,15 @@ const Customer = () => {
 				if (params.value === 0 || params.value === "0") {
 					statusText = `<span style="font-size: 11px; color: #aaa;">No Sites Available</span>`;
 				} else {
-					statusText = `<b>${params.value}</b> <span style="font-size: 11px;">${
-						params.value > 1 ? "Sites" : "Site"
-					}</span>`;
+					statusText = `<b>${params.value}</b>`;
 				}
 				return <span dangerouslySetInnerHTML={{ __html: statusText }} />;
 			},
 		},
 		{
 			field: "equipments",
-			headerName: "Provisioned Equipments",
-			width: 200,
+			headerName: "Equipments",
+			width: 100,
 			align: "center",
 			headerAlign: "center",
 			renderCell: (params) => {
@@ -77,9 +95,7 @@ const Customer = () => {
 				if (params.value === 0 || params.value === "0") {
 					statusText = `<span style="font-size: 11px; color: #aaa;">No Equipments</span>`;
 				} else {
-					statusText = `<b>${params.value}</b> <span style="font-size: 11px;">${
-						params.value > 1 ? "Equipments" : "Equipment"
-					}</span>`;
+					statusText = `<b>${params.value}</b>`;
 				}
 				return <span dangerouslySetInnerHTML={{ __html: statusText }} />;
 			},
@@ -95,9 +111,7 @@ const Customer = () => {
 				if (params.value === 0 || params.value === "0") {
 					statusText = `<span style="font-size: 11px; color: #aaa;">N/A</span>`;
 				} else {
-					statusText = `<b>${params.value}</b> <span style="font-size: 11px;">${
-						params.value > 1 ? "Users" : "User"
-					}</span>`;
+					statusText = `<b>${params.value}</b>`;
 				}
 				return <span dangerouslySetInnerHTML={{ __html: statusText }} />;
 			},
@@ -112,27 +126,22 @@ const Customer = () => {
 		},
 	];
 
+	const handleOpenForm = () => {
+		setCusFormOpen(true);
+	};
+
 	const customButtons = [
 		{
-			label: "Add New Customer",
-			icon: <AddCircleOutlineIcon />,
+			label: "Customer",
+			icon: <AddCircleIcon />,
 			onClick: () => {
-				console.log("Adding");
-			},
-		},
-		{
-			label: "Delete Selected",
-			icon: <DeleteIcon />,
-			onClick: () => {
-				console.log("Deleting");
+				setIsEditing(false);
+				handleOpenForm();
 			},
 		},
 	];
+
 	useEffect(() => {
-		setActiveTitle({
-			title: "Customers",
-			subtitle: "List of all the Customers",
-		});
 		fetchCustomers();
 	}, []);
 
@@ -175,51 +184,40 @@ const Customer = () => {
 		console.log("Row clicked:", params.row);
 	};
 
-	function formatDate(isoString) {
-		const date = new Date(isoString);
-
-		const day = String(date.getDate()).padStart(2, "0");
-		const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-based
-		const year = date.getFullYear();
-
-		const hours = String(date.getHours()).padStart(2, "0");
-		const minutes = String(date.getMinutes()).padStart(2, "0");
-		const seconds = String(date.getSeconds()).padStart(2, "0");
-
-		return `${month}-${day}-${year} ${hours} ${minutes} ${seconds}`;
-	}
-
 	if (loading) {
-		return (
-			<Box sx={{ ...flexCol, justifyContent: "center", alignItems: "center", minHeight: "300px", width: "100%" }}>
-				<CircularProgress />
-			</Box>
-		);
+		return <LoadingWrapper minHeight={"300px"} />;
 	}
 
 	if (error && !loading) {
-		return (
-			<Box sx={{ ...flexCol, justifyContent: "center", alignItems: "center", minHeight: "300px", width: "100%" }}>
-				<Alert severity="error">{error}</Alert>
-			</Box>
-		);
+		return <ErrorAlertWrapper minHeight={"300px"} error={error} />;
 	}
 
 	return (
-		<Box p={2} px={4} width={"100%"}>
-			<CustomDatagrid
-				data={customers}
-				columns={columns}
-				rowIdField="id"
-				onSelect={handleRowSelect}
-				rowClick={true}
-				onRowClick={handleRowClick}
-				pageSize={10}
-				pageSizeOptions={[5, 10, 25, 50]}
-				checkboxSelection={true}
-				customButtons={customButtons}
-			/>
-		</Box>
+		<EntityWrapper
+			title={"Customers"}
+			subtitle={"List of all the Customers"}
+			data={customers}
+			setData={setCustomers}
+			columns={columns}
+			rowIdField="id"
+			onSelect={handleRowSelect}
+			rowClick={true}
+			onRowClick={handleRowClick}
+			checkboxSelection={true}
+			customButtons={customButtons}
+			sortBy={[{ field: "created", sort: "desc" }]}
+			formProps={{
+				formOpen: cusFormOpen,
+				setFormOpen: setCusFormOpen,
+				formData: cusFormData,
+				setFormData: setCusFormData,
+				activeStep,
+				setActiveStep,
+				isEditing,
+				selectedCusId,
+			}}
+			FormComponent={CustomerForm}
+		/>
 	);
 };
 

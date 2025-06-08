@@ -1,4 +1,4 @@
-import customHttp from "./customHTTP";
+import customHttp from "../Utilities/customHTTP";
 
 const loginService = async (data) => {
 	try {

@@ -44,19 +44,15 @@
   border-color: #aaa !important;
 }
 
-/* .dx-datagrid {
-  font-family: var(--font-family, 'Poppins') !important;
-  font-size: var(--font-size-base, 14px) !important;
+
+.swal2-container {
+  z-index: 9999;
 }
 
-.dx-datagrid .dx-header-row {
-  background-color: var(--primary-main) !important;
-  color: var(--primary-contrast-text) !important;
+div:where(.swal2-icon){
+    width: 3em;
+    height: 3em;
 }
-
-.dx-datagrid .dx-data-row:hover {
-  background-color: var(--primary-hover) !important;
-} */
 
 .swal2-title {
   font-size: 20px !important;
@@ -68,9 +64,57 @@
 
 div:where(.swal2-container) button:where(.swal2-styled) {
     margin: .3125em;
-    padding: 10px 15px !important;
+    padding: 5px 25px !important;
+    min-width: 75px !important;
+    border-radius: 4px !important;
     transition: var(--swal2-button-transition);
     box-shadow: 0 0 0 3px rgba(0, 0, 0, 0);
     font-weight: 500;
     font-size: 13px !important;
 }
+
+div:where(.swal2-container) button:where(.swal2-styled):where(.swal2-confirm) {
+    border: 1px solid var(--primary-main) !important;
+    background: initial;
+    background-color: var(--primary-main) !important;
+    color: #fff;
+    font-size: 1em;
+}
+
+div:where(.swal2-container) button:where(.swal2-styled):where(.swal2-deny) {
+    border: 1px solid var(--primary-main) !important;
+    background-color: transparent !important;
+    color: var(--primary-main) !important;
+    font-size: 1em;
+}
+
+div:where(.swal2-container) div:where(.swal2-actions):not(.swal2-loading) .swal2-styled:hover {
+    background-image: linear-gradient(var(--primary-main), var(--primary-main));
+}
+
+/* div:where(.swal2-icon) .swal2-icon-content {
+    display: flex;
+    align-items: center;
+    font-size: 40px !important;
+}
+
+div:where(.swal2-icon).swal2-error [class^=swal2-x-mark-line][class$=right]
+ {
+    right: 0.7em !important;
+    transform: rotate(-45deg);
+}
+
+div:where(.swal2-icon).swal2-error [class^=swal2-x-mark-line][class$=left] {
+    left: 0.75em !important;
+    transform: rotate(45deg);
+}
+
+div:where(.swal2-icon).swal2-error [class^=swal2-x-mark-line] {
+    display: block;
+    position: absolute;
+    top: 1.4em !important;
+    width: 1.5em !important;
+    height: 0.25em;
+    border-radius: .125em;
+    background-color: #f27474;
+} */
