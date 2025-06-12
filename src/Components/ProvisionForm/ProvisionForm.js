@@ -24,7 +24,7 @@ import { createCustomerUsersService, fetchCustomersService } from "../../Service
 import { useCustomTheme } from "../../Context/ThemeContext";
 import FormField from "../FormField/FormField";
 import AddressForm from "../AddressForm/AddressForm";
-import { fetchEquipmentsService } from "../../Services/equipmentService";
+import { createEquipmentProvisionsService, fetchEquipmentsService } from "../../Services/equipmentService";
 import { DatePicker } from "@mui/x-date-pickers";
 import moment from "moment";
 import { LocalizationProvider } from "@mui/x-date-pickers";
@@ -33,6 +33,7 @@ import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
 const ProvisionForm = ({
 	formOpen,
 	setFormOpen,
+	fetchParentData,
 	setParentData,
 	showCustomer = false,
 	showEquipment = false,
@@ -42,6 +43,8 @@ const ProvisionForm = ({
 	equipmentName = "",
 	customerName = "",
 	customerSites = [],
+	selectedRow = null,
+	isEditing = false,
 }) => {
 	const [formData, setFormData] = useState({
 		customer: showStaticCustomer ? customerName : null,
@@ -49,6 +52,7 @@ const ProvisionForm = ({
 		site: null,
 		provisionedDate: moment(),
 		serialNumber: "",
+		status: "1",
 	});
 	const initialFormDataRef = useRef();
 	const formTitle = "Add New Equipment Provision";
@@ -130,6 +134,17 @@ const ProvisionForm = ({
 			setSites(siteOpts);
 			setFormData((prev) => ({ ...prev, customer: customerName }));
 		}
+
+		if (isEditing && selectedRow) {
+			setFormData({
+				customer: selectedRow.data.org_id,
+				equipment: selectedRow.data.eq_id,
+				site: null,
+				provisionedDate: moment(),
+				serialNumber: selectedRow.data.serial_number,
+				status: selectedRow.data.status_id === 1 ? "1" : "0",
+			});
+		}
 	}, []);
 
 	useEffect(() => {
@@ -142,6 +157,19 @@ const ProvisionForm = ({
 			setSites(cusSites);
 		}
 	}, [formData.customer]);
+
+	useEffect(() => {
+		if (sites && sites.length > 0) {
+			console.log("Sites: ", sites);
+			if (isEditing && selectedRow) {
+				console.log("Updating Site");
+				setFormData((prev) => ({
+					...prev,
+					site: selectedRow.data.site_id,
+				}));
+			}
+		}
+	}, [sites]);
 
 	useEffect(() => {
 		if (formOpen) {
@@ -223,6 +251,8 @@ const ProvisionForm = ({
 					site: null,
 					provisionedDate: moment(),
 					serialNumber: "",
+					internalNotes: "",
+					status: "1",
 				});
 			} else {
 				console.log("Provision already exists:", req_body.site_name);
@@ -232,37 +262,38 @@ const ProvisionForm = ({
 
 			setFormSubmitting(false);
 		} else {
-			const response = await createCustomerUsersService(req_body);
+			const response = await createEquipmentProvisionsService(req_body);
 			console.log(response);
 			if (response.status) {
-				if (setParentData) {
-					const customerUserCounts = response.data.map((customer) => ({
-						id: customer.id,
-						name: customer.name,
-						organization: customer?.organization?.name || "",
-						created: customer.createdAt,
-					}));
-					setParentData(customerUserCounts);
+				if (fetchParentData) {
+					// console.log("Setting Parent Data", setParentData);
+					// const provisionsData = response.data.map((prov) => ({
+					// 	id: prov.id,
+					// 	serial_number: prov.serial_number,
+					// 	status: prov?.status_id || 0,
+					// 	equipment_name: prov?.equipment?.equipment || "",
+					// 	customer_name: prov?.organization?.name || "",
+					// 	created: prov.createdAt,
+					// 	updated: prov.updatedAt,
+					// 	data: prov,
+					// }));
+					// setParentData((prev) => [...prev, ...provisionsData]);
+
+					fetchParentData();
 				}
 				if (!addNew) {
 					setFormOpen(false);
 				}
 				setFormData({
-					name: "",
-					first_name: "",
-					last_name: "",
-					email: "",
-					customer: "",
-					status: "0",
-					notes: "",
-					username: "",
-					password: "",
-					confirmPassword: "",
-					sendActivationEmail: true,
+					customer: showStaticCustomer ? customerName : null,
+					equipment: showStaticEquipment ? equipmentName : null,
+					site: null,
+					provisionedDate: moment(),
+					serialNumber: "",
+					internalNotes: "",
+					status: "1",
 				});
-				setTimeout(() => {
-					setFormSubmitting(false);
-				}, 1500);
+				setFormSubmitting(false);
 			} else {
 				setAlert(response.message);
 				setFormLoading(false);
@@ -301,6 +332,8 @@ const ProvisionForm = ({
 					site: null,
 					provisionedDate: moment(),
 					serialNumber: "",
+					internalNotes: "",
+					status: "1",
 				});
 			}
 		});
@@ -324,25 +357,20 @@ const ProvisionForm = ({
 
 	return (
 		<LocalizationProvider dateAdapter={AdapterMoment}>
-			<Box p={2} width="50vw" sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+			<Box p={2} sx={{ display: "flex", flexDirection: "column", height: "100%", width: "100%" }}>
 				<Box
 					sx={{
 						...flexRow,
 						justifyContent: "space-between",
 						width: "100%",
 					}}>
-					<Tooltip title="Close the Form">
-						<Button startIcon={<ArrowBackIcon />} sx={{ pl: 0 }} onClick={handleCloseForm}>
-							Close Form
-						</Button>
-					</Tooltip>
+					<PageHeader title={formTitle} subtitle={formSubTitle} />
 					<Tooltip title="Close the Form">
 						<IconButton size="small" onClick={handleCloseForm}>
 							<CloseIcon />
 						</IconButton>
 					</Tooltip>
 				</Box>
-				<PageHeader title={formTitle} subtitle={formSubTitle} />
 
 				{alert && (
 					<Alert severity="error" sx={{ mb: 2 }}>
@@ -452,6 +480,28 @@ const ProvisionForm = ({
 							sx={{ flex: 1, minWidth: 130 }}
 						/>
 					</Box>
+					<FormField
+						type="select"
+						label="Status"
+						name="status"
+						value={formData.status}
+						error={formErrors.status}
+						onChange={handleFormChange}
+						options={[
+							{ label: "Active", value: "1" },
+							{ label: "Inactive", value: "0" },
+						]}
+						showRequired={true}
+					/>
+					<Divider flexItem sx={{ my: "10px" }} />
+					<FormField
+						type={"textarea"}
+						label={"Internal Notes"}
+						name="internalNotes"
+						value={formData.internalNotes}
+						onChange={handleFormChange}
+						error={formErrors.internalNotes}
+					/>
 				</Box>
 
 				<Box display="flex" justifyContent="space-between" mt={2}>

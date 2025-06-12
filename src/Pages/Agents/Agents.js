@@ -9,6 +9,7 @@ import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import DeleteIcon from "@mui/icons-material/Delete";
 import moment from "moment";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
+import LoadingWrapper from "../../Components/LoadingWrapper/LoadingWrapper";
 
 const Agents = () => {
 	const { setActiveTitle } = usePageTitle();
@@ -190,11 +191,7 @@ const Agents = () => {
 	}
 
 	if (loading) {
-		return (
-			<Box sx={{ ...flexCol, justifyContent: "center", alignItems: "center", minHeight: "300px", width: "100%" }}>
-				<CircularProgress />
-			</Box>
-		);
+		return <LoadingWrapper minHeight={"400px"} />;
 	}
 
 	if (error && !loading) {

@@ -32,6 +32,7 @@ const RichTextEditor = ({
 			showCharsCounter: false,
 			showWordsCounter: false,
 			showXPathInStatusbar: false,
+			addNewLine: false,
 			placeholder,
 			buttons: [
 				"bold",

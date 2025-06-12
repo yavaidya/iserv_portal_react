@@ -1,11 +1,3 @@
-import customHttp from "../Utilities/customHTTP";
+import { handleRequest } from "../Utilities/requestHandler";
 
-export const fetchAgentsService = async () => {
-	try {
-		const response = await customHttp.get("/staff/get-all-staff");
-		return response.data;
-	} catch (error) {
-		console.log(error);
-		return error.response.data;
-	}
-};
+export const fetchAgentsService = () => handleRequest("get", "/staff/get-all-staff");

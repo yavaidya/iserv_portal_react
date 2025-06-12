@@ -102,7 +102,9 @@ const DocumentCategories = () => {
 
 				setCategories(cats);
 				setError(null);
+
 				setLoading(false);
+
 				console.log("Categories", response);
 			} else {
 				setError("Failed Fetching Customer Users");
@@ -136,6 +138,7 @@ const DocumentCategories = () => {
 		<EntityWrapper
 			title={"Document Categories"}
 			subtitle={"List of all the Document Categories"}
+			listLoading={loading}
 			data={categories}
 			setData={setCategories}
 			columns={columns}
@@ -151,6 +154,7 @@ const DocumentCategories = () => {
 				setFormOpen: setFormOpen,
 				setParentData: setCategories,
 				selectedRow: null,
+				fetchParentData: fetchDocumentCategories,
 			}}
 			FormComponent={DocumentCategoriesForm}
 		/>

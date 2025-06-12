@@ -100,22 +100,27 @@ const Documents = () => {
 			setLoading(true);
 			const response = await fetchDocumentsService();
 			if (response.status) {
-				const docs = response.data.map((doc) => {
-					return {
-						kb_id: doc.kb_id,
-						name: doc.title,
-						category_id: doc.category_id,
-						category_name: doc?.category?.name || "",
-						is_published: doc.ispublished ? "Public" : "Private",
-						created: doc.createdAt,
-						attachment_count: doc.attachment ? 1 : 0,
-					};
-				});
+				if (response.data.length > 0) {
+					const docs = response.data.map((doc) => {
+						return {
+							kb_id: doc.kb_id,
+							name: doc.title,
+							category_id: doc.category_id,
+							category_name: doc?.category?.name || "",
+							is_published: doc.ispublished ? "Public" : "Private",
+							created: doc.createdAt,
+							attachment_count: doc.attachment ? 1 : 0,
+						};
+					});
 
-				setDocuments(docs);
-				setError(null);
-				setLoading(false);
-				console.log("Documents", response);
+					setDocuments(docs);
+					setError(null);
+					setLoading(false);
+					console.log("Documents", response);
+				} else {
+					setLoading(false);
+					setDocuments([]);
+				}
 			} else {
 				setError("Failed Fetching Customer Users");
 				setDocuments([]);
@@ -162,6 +167,7 @@ const Documents = () => {
 				formOpen: formOpen,
 				setFormOpen: setFormOpen,
 				setParentData: setDocuments,
+				fetchParentData: fetchDocuments,
 				selectedRow: null,
 			}}
 			FormComponent={DocumentsForm}

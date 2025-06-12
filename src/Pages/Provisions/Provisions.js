@@ -9,31 +9,29 @@ import LoadingWrapper from "../../Components/LoadingWrapper/LoadingWrapper";
 import ErrorAlertWrapper from "../../Components/ErrorAlertWrapper/ErrorAlertWrapper";
 import EntityWrapper from "../../Components/EntityWrapper/EntityWrapper";
 
-import { fetchEquipmentsService, fetchEquipmentTypesService } from "../../Services/equipmentService";
+import { fetchEquipmentProvisionsService, fetchEquipmentsService } from "../../Services/equipmentService";
 import { useNavigate } from "react-router-dom";
 import { formatDate } from "../../Services/globalServiceUtils";
+import ProvisionForm from "../../Components/ProvisionForm/ProvisionForm";
+import moment from "moment";
 
-const Equipments = () => {
+const Provisions = () => {
 	const [activeStep, setActiveStep] = useState(0);
 	const { setActiveTitle } = usePageTitle();
 	const { flexCol, flexRow } = useCustomTheme();
-	const [equipments, setEquipments] = useState([]);
-	const [equipmentTypes, setEquipmentTypes] = useState([]);
+	const [provisions, setProvisions] = useState([]);
 	const [error, setError] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [isEditing, setIsEditing] = useState(false);
 	const [eqFormOpen, setEqFormOpen] = useState(false);
+	const [selectedRow, setSelectedRow] = useState(null);
 	const [formData, setFormData] = useState({
-		equipmentName: "",
-		equipmentParent: { id: 0, label: "Select Parent" },
-		internalNotes: "",
-		isPublic: true,
-		status: "0",
-		documents: [],
-		provisions: [],
-		selected_doc_ids: [],
-		parent_doc_ids: [],
-		parentDocsInherit: true,
+		customer: null,
+		equipment: null,
+		site: null,
+		provisionedDate: moment(),
+		serialNumber: "",
+		status: "1",
 	});
 	const [selectedEqId, setSelectedEqId] = useState(null);
 	const [formTitle, setFormTitle] = useState("");
@@ -46,76 +44,47 @@ const Equipments = () => {
 		setEqFormOpen(true);
 	};
 
-	const fetchEquipments = async () => {
+	const fetchProvisions = async () => {
 		setLoading(true);
 		try {
-			const response = await fetchEquipmentsService();
+			const response = await fetchEquipmentProvisionsService();
 			if (response.status) {
 				console.log(response);
-				console.log(equipmentTypes);
 				setError(null);
-				const equipmentsData = response.data.map((equipment) => ({
-					id: equipment.eq_id,
-					name: equipment.equipment,
-					status: equipment?.status || 0,
-					level: equipmentTypes.find((et) => et.key === equipment?.level)?.value || "No level",
-					level_key: equipment?.level || "",
-					provisions: equipment?.org_provisioned_eqs?.length || 0,
-					created: equipment.createdAt,
-					updated: equipment.updatedAt,
-					parent_id: equipment?.parent_equipment?.eq_id || 0,
-					parent_name: equipment?.parent_equipment?.equipment || "-- Top Level --",
-					data: equipment,
+				const provisionsData = response.data.map((prov) => ({
+					id: prov.id,
+					serial_number: prov.serial_number,
+					status: prov?.status_id || 0,
+					equipment_name: prov?.equipment?.equipment || "",
+					customer_name: prov?.organization?.name || "",
+					created: prov.createdAt,
+					updated: prov.updatedAt,
+					data: prov,
 				}));
-				setEquipments(equipmentsData);
+				setProvisions(provisionsData);
 				setLoading(false);
 			} else {
-				setError("Failed Fetching Customer Users");
-				setEquipments([]);
+				setError("Failed Fetching Customer Provisions");
+				setProvisions([]);
 				setLoading(false);
 			}
 		} catch (error) {
-			setError("Failed Fetching Customer Users");
+			setError("Failed Fetching Customer Provisions");
 			setLoading(false);
-			setEquipments([]);
+			setProvisions([]);
 		}
 	};
 
 	useEffect(() => {
 		setActiveTitle({
-			title: "Equipments",
-			subtitle: "List of all the Equipments",
-			tooltip: "List of all the Equipments",
+			title: "Provisions",
+			subtitle: "List of all the Provisions",
+			tooltip: "List of all the Provisions",
 		});
-		setFormTitle(`Add New Equipment`);
+		setFormTitle("Add New Equipment");
 		setFormSubTitle("Complete all the steps to create a new Equipment");
-		fetchEquipmentTypes();
+		fetchProvisions();
 	}, []);
-
-	useEffect(() => {
-		if (equipmentTypes.length > 0) {
-			fetchEquipments();
-		}
-	}, [equipmentTypes]);
-
-	const fetchEquipmentTypes = async () => {
-		try {
-			const response = await fetchEquipmentTypesService();
-			console.log(response);
-			if (response.status) {
-				setEquipmentTypes(response.data);
-				// setLoading(false);
-			} else {
-				setError("Failed Fetching Customer Users");
-				setEquipmentTypes([]);
-				// setLoading(false);
-			}
-		} catch (error) {
-			setError("Failed Fetching Customer Users");
-			// setLoading(false);
-			setEquipmentTypes([]);
-		}
-	};
 
 	const handleRowSelect = (selectedRows) => {
 		const rows = Array.from(selectedRows.ids);
@@ -124,38 +93,19 @@ const Equipments = () => {
 
 	const handleRowClick = (params) => {
 		console.log("Row clicked:", params.row);
-		navigate(`/equipments/${params.row.id}`);
+		navigate(`/provisions/${params.row.id}`);
 	};
 
 	const handleEdit = (row) => {
 		console.log("Selected Eq: ", row);
 		setIsEditing(true);
-		let docids = [];
-		if (row.data.eq_docs && row.data.eq_docs.length > 0) {
-			docids = row.data.eq_docs.map((d) => d?.kb_id || 0);
-		} else {
-			docids = [];
-		}
-		setFormData({
-			equipmentName: row.name,
-			equipmentParent: { id: row.parent_id, label: row.parent_name },
-			internalNotes: "",
-			isPublic: true,
-			status: "0",
-			documents: docids,
-			doc_ids: {
-				type: "include",
-				ids: new Set(),
-			},
-			provisions: [],
-		});
-		setSelectedEqId(parseInt(row.id));
+		setSelectedRow(row);
 		handleOpenForm();
 	};
 
 	const customButtons = [
 		{
-			label: "Equipment",
+			label: "Provision",
 			icon: <AddCircleIcon />,
 			onClick: () => {
 				setIsEditing(false);
@@ -166,11 +116,11 @@ const Equipments = () => {
 
 	const columns = [
 		{
-			field: "name",
+			field: "equipment_name",
 			headerName: "Equipment Name",
 			flex: 1,
 			renderCell: (params) => (
-				<Tooltip title="View Equipment Details">
+				<Tooltip title="View Details">
 					<span
 						style={{
 							cursor: "pointer",
@@ -184,13 +134,6 @@ const Equipments = () => {
 			),
 		},
 		{
-			field: "level",
-			headerName: "Level",
-			width: 150,
-			align: "center",
-			headerAlign: "center",
-		},
-		{
 			field: "status",
 			headerName: "Status",
 			width: 150,
@@ -200,17 +143,22 @@ const Equipments = () => {
 				params.value === "1" || params.value === 1 ? <span>Active</span> : <span>Inactive</span>,
 		},
 		{
-			field: "provisions",
-			headerName: "Provisions",
+			field: "serial_number",
+			headerName: "Serial #",
 			width: 150,
 			align: "center",
 			headerAlign: "center",
 			renderCell: (params) =>
-				params.value === 0 ? (
-					<span style={{ fontSize: "10px", color: "gray" }}>No Provisions</span>
-				) : (
-					params.value
-				),
+				params.value === "" ? <span style={{ fontSize: "10px", color: "gray" }}>N/A</span> : params.value,
+		},
+		{
+			field: "customer_name",
+			headerName: "Customer Name",
+			width: 150,
+			align: "center",
+			headerAlign: "center",
+			renderCell: (params) =>
+				params.value === "" ? <span style={{ fontSize: "10px", color: "gray" }}>N/A</span> : params.value,
 		},
 		{
 			field: "updated",
@@ -240,10 +188,10 @@ const Equipments = () => {
 	return (
 		<>
 			<EntityWrapper
-				title={"Equipments"}
-				subtitle={"List of all the Equipments"}
-				data={equipments}
-				setData={setEquipments}
+				title={"Provisions"}
+				subtitle={"List of all the Provisions"}
+				data={provisions}
+				setData={setProvisions}
 				columns={columns}
 				rowIdField="id"
 				onSelect={handleRowSelect}
@@ -258,21 +206,17 @@ const Equipments = () => {
 				formProps={{
 					isEditing: isEditing,
 					formOpen: eqFormOpen,
+					selectedRow: selectedRow,
 					setFormOpen: setEqFormOpen,
-					useDrawer: useDrawer,
-					setUseDrawer: setUseDrawer,
-					formData: formData,
-					setFormData: setFormData,
-					activeStep: activeStep,
-					setActiveStep: setActiveStep,
-					fetchEquipments: fetchEquipments,
-					equipments: equipments,
-					selectedEqId: selectedEqId,
+					showCustomer: true,
+					showEquipment: true,
+					createProvision: true,
+					fetchParentData: fetchProvisions,
 				}}
-				FormComponent={EquipmentForm}
+				FormComponent={ProvisionForm}
 			/>
 		</>
 	);
 };
 
-export default Equipments;
+export default Provisions;

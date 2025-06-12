@@ -146,6 +146,7 @@ const CustomerUsers = () => {
 				setFormOpen: setFormOpen,
 				setParentData: setCustomerUsers,
 				selectedRow: null,
+				fetchParentData: fetchCustomerUsers,
 			}}
 			FormComponent={CustomerUserForm}
 		/>

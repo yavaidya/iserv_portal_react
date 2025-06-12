@@ -33,7 +33,13 @@ import DocumentCard from "../DocumentCard/DocumentCard";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LibraryAddCheckIcon from "@mui/icons-material/LibraryAddCheck";
 import DocumentsSelectionForm from "../DocumentsSelectionForm/DocumentsSelectionForm";
-const DocumentCategoriesForm = ({ formOpen, setFormOpen, setCategories = null, selectedCategory = null }) => {
+const DocumentCategoriesForm = ({
+	formOpen,
+	setFormOpen,
+	setCategories = null,
+	selectedCategory = null,
+	fetchParentData = null,
+}) => {
 	const [formData, setFormData] = useState({
 		title: "",
 		description: "",
@@ -104,15 +110,8 @@ const DocumentCategoriesForm = ({ formOpen, setFormOpen, setCategories = null, s
 		const response = await createDocumentCategoriesService(req_body);
 		console.log(response);
 		if (response.status) {
-			if (setCategories) {
-				const docs = response.data.map((cat) => ({
-					category_id: cat.category_id,
-					category_name: cat.name,
-					created: cat.createdAt,
-					kb_count: cat?.knowledgebases?.length || 0,
-				}));
-
-				setCategories(docs);
+			if (fetchParentData) {
+				await fetchParentData();
 			}
 			if (!addNew) {
 				setFormOpen(false);
@@ -216,16 +215,16 @@ const DocumentCategoriesForm = ({ formOpen, setFormOpen, setCategories = null, s
 				<Box
 					sx={{
 						...flexRow,
-						justifyContent: "flex-end",
+						justifyContent: "space-between",
 						width: "100%",
 					}}>
+					<PageHeader title={formTitle} subtitle={formSubTitle} />
 					<Tooltip title="Close the Form">
 						<IconButton size="small" onClick={handleCloseForm}>
 							<CloseIcon />
 						</IconButton>
 					</Tooltip>
 				</Box>
-				<PageHeader title={formTitle} subtitle={formSubTitle} />
 
 				{alert && (
 					<Alert severity="error" sx={{ mb: 2 }}>

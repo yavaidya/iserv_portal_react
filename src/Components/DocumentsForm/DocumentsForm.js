@@ -34,6 +34,7 @@ const DocumentsForm = ({
 	selectedCategory = null,
 	showCategories = true,
 	setCategoryFormData = null,
+	fetchParentData = null,
 }) => {
 	const [formData, setFormData] = useState({
 		category: "",
@@ -217,6 +218,9 @@ const DocumentsForm = ({
 						],
 					]);
 				}
+				if (fetchParentData) {
+					await fetchParentData();
+				}
 				if (!addNew) {
 					setFormOpen(false);
 				}
@@ -336,17 +340,16 @@ const DocumentsForm = ({
 			<Box
 				sx={{
 					...flexRow,
-					justifyContent: "flex-end",
+					justifyContent: "space-between",
 					width: "100%",
 				}}>
+				<PageHeader title={formTitle} subtitle={formSubTitle} />
 				<Tooltip title="Close the Form">
 					<IconButton size="small" onClick={handleCloseForm}>
 						<CloseIcon />
 					</IconButton>
 				</Tooltip>
 			</Box>
-
-			<PageHeader title={formTitle} subtitle={formSubTitle} />
 
 			{alert && (
 				<Alert severity="error" sx={{ mb: 2 }}>
@@ -408,6 +411,7 @@ const DocumentsForm = ({
 										fullWidth
 									/>
 								</Box>
+
 								<Box display="flex" alignItems="center">
 									<Box width="200px" minWidth="200px">
 										<Typography fontWeight="bold">

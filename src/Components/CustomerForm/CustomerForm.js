@@ -48,6 +48,7 @@ import CustomerSiteForm from "../CustomerSiteForm/CustomerSiteForm";
 import SiteFormCard from "../SiteFormCard/SiteFormCard";
 import ProvisionForm from "../ProvisionForm/ProvisionForm";
 import ProvisionFormCard from "../ProvisionFormCard/ProvisionFormCard";
+import { createCustomerService } from "../../Services/customerService";
 
 const customersList = [
 	{ id: 1, label: "Acme Corp" },
@@ -78,6 +79,8 @@ const CustomerForm = ({
 	setFormOpen,
 	formData,
 	setFormData,
+	setParentData,
+	fetchParentData,
 	activeStep,
 	setActiveStep,
 	isEditing = false,
@@ -255,71 +258,41 @@ const CustomerForm = ({
 	const handleSubmit = async (data) => {
 		setIsSubmitting(true);
 		console.log("Final form data:", data);
-		setTimeout(() => {
-			setActiveStep(0);
-			setSiteForms([]);
-			setFormData({
-				customer_name: "",
-				phone: "",
-				website: "",
-				status: "1",
-				manager: "",
-				users: [],
-				sites: [],
-				provisions: [],
-				internalNotes: "",
-			});
-			setIsSubmitting(false);
-		}, 2000);
-		// if (data.new_docs && data.new_docs.length > 0) {
-		//     const docids = data.new_docs.map((d) => d?.kb_id || 0);
 
-		//     // Merge with existing data.documents and remove duplicates
-		//     const merged = Array.from(new Set([...(data.documents || []), ...docids]));
+		if (isEditing) {
+			console.log("Editing: ", data);
+		} else {
+			const response = await createCustomerService(data);
+			if (response.status) {
+				setIsSubmitting(false);
+				if (fetchParentData) {
+					await fetchParentData();
+				}
+				setFormOpen(false);
 
-		//     data.documents = merged;
-		// }
-		// const req_body = {
-		//     eq_id: selectedEqId ? selectedEqId : null,
-		//     eq_pid: parseInt(data.equipmentParent?.id || null),
-		//     ispublic: data.isPublic,
-		//     status: parseInt(data.status),
-		//     equipment: data.equipmentName,
-		//     notes: data.internalNotes,
-		//     documents: data.documents,
-		//     provisions: data.provisions,
-		// };
-		// if(isEditing){
-		//     console.log("Editing: ",req_body)
-		// } else {
-		//     const response = await createEquipmentsService(req_body);
-		//     if (response.status) {
-		//         setIsSubmitting(false);
-		//         await fetchEquipments();
-		//         setFormOpen(false);
-
-		//         setUseDrawer(true);
-		//         setActiveStep(0);
-		//         setFormData({
-		//             equipmentName: "",
-		//             equipmentParent: { id: 0, label: "-- Top Level --" },
-		//             internalNotes: "",
-		//             isPublic: true,
-		//             status: "0",
-		//             documents: [],
-		//             doc_ids: {
-		//                 type: "include",
-		//                 ids: new Set(),
-		//             },
-		//             provisions: [],
-		//         });
-		//         Swal.fire({
-		//             icon: "success",
-		//             title: "Success",
-		//             text: response.message,
-		//         });
-		//     }
-		// }
+				setDrawerForm(true);
+				setActiveStep(0);
+				setFormData({
+					customer_name: "",
+					phone: "",
+					website: "",
+					status: "1",
+					manager: "",
+					users: [],
+					sites: [],
+					provisions: [],
+					internalNotes: "",
+				});
+				Swal.fire({
+					icon: "success",
+					title: "Success",
+					text: response.message,
+				});
+			} else {
+				setIsSubmitting(false);
+				setError(response.message);
+			}
+		}
 	};
 
 	const handleCloseForm = () => {
@@ -444,17 +417,26 @@ const CustomerForm = ({
 								justifyContent: "space-between",
 								width: "100%",
 								mb: 1,
+								px: 2,
+								py: 1,
 							}}>
-							<Tooltip title={drawerForm ? "Open in Full Screen" : "Open in Drawer"}>
-								<IconButton size="small" onClick={() => setDrawerForm(!drawerForm)}>
-									{drawerForm ? <OpenInFullIcon /> : <CloseFullscreenIcon />}
-								</IconButton>
-							</Tooltip>
-							<Tooltip title="Close the Form">
-								<IconButton size="small" onClick={handleCloseForm}>
-									<CloseIcon />
-								</IconButton>
-							</Tooltip>
+							<PageHeader title={formTitle} subtitle={formSubTitle} />
+							<Box
+								sx={{
+									...flexRow,
+									justifyContent: "flex-end",
+								}}>
+								<Tooltip title={drawerForm ? "Open in Full Screen" : "Open in Drawer"}>
+									<IconButton size="small" onClick={() => setDrawerForm(!drawerForm)}>
+										{drawerForm ? <OpenInFullIcon /> : <CloseFullscreenIcon />}
+									</IconButton>
+								</Tooltip>
+								<Tooltip title="Close the Form">
+									<IconButton size="small" onClick={handleCloseForm}>
+										<CloseIcon />
+									</IconButton>
+								</Tooltip>
+							</Box>
 						</Box>
 					) : (
 						<Box
@@ -491,7 +473,6 @@ const CustomerForm = ({
 							py: 1,
 							minHeight: 0, // Required to ensure flexGrow + overflow works properly
 						}}>
-						<PageHeader title={formTitle} subtitle={formSubTitle} />
 						{error && (
 							<Alert severity="error" sx={{ width: "100%", my: 2 }}>
 								{error}

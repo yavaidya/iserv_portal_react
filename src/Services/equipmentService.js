@@ -1,31 +1,17 @@
-import customHttp from "../Utilities/customHTTP";
+import { handleRequest } from "../Utilities/requestHandler";
 
-export const fetchEquipmentsService = async () => {
-	try {
-		const response = await customHttp.get("/eq/get-all-eq");
-		return response.data;
-	} catch (error) {
-		console.log(error);
-		return error.response.data;
-	}
-};
+export const fetchEquipmentsService = () => handleRequest("get", "/equipments/list");
 
-export const fetchEquipmentByIdService = async (id) => {
-	try {
-		const response = await customHttp.post("/eq/get-eq-by-id", { eq_id: id });
-		return response.data;
-	} catch (error) {
-		console.log(error);
-		return error.response.data;
-	}
-};
+export const fetchEquipmentTypesService = () => handleRequest("get", "/equipments/types/list");
 
-export const createEquipmentsService = async (formData) => {
-	try {
-		const response = await customHttp.post("/eq/create", { data: formData });
-		return response.data;
-	} catch (error) {
-		console.log(error);
-		return error.response.data;
-	}
-};
+export const fetchEquipmentProvisionsService = () => handleRequest("get", "/equipments/provisions/list");
+
+export const fetchEquipmentProvisionByIdService = (id) =>
+	handleRequest("post", "/equipments/provisions/by-id", { prov_id: id });
+
+export const fetchEquipmentByIdService = (id) => handleRequest("post", "/equipments/by-id", { eq_id: id });
+
+export const createEquipmentsService = (formData) => handleRequest("post", "/equipments/create", formData);
+
+export const createEquipmentProvisionsService = (formData) =>
+	handleRequest("post", "/equipments/provisions/create", formData);

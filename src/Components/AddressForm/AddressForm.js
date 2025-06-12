@@ -76,7 +76,9 @@ const AddressForm = ({ setParentFormData, formErrors, initialData }) => {
 
 	// Fetch states when country changes
 	useEffect(() => {
-		fetchStates(formData.country);
+		if (formData.country && formData.country.trim() !== "") {
+			fetchStates(formData.country);
+		}
 		setFormData((prev) => ({ ...prev, state: "", city: "" }));
 		setCities([]);
 		// eslint-disable-next-line
@@ -84,7 +86,7 @@ const AddressForm = ({ setParentFormData, formErrors, initialData }) => {
 
 	// Fetch cities when state changes
 	useEffect(() => {
-		if (formData.country && formData.state) {
+		if (formData.country && formData.country.trim() !== "" && formData.state && formData.state.trim() !== "") {
 			fetchCities(formData.country, formData.state);
 		} else {
 			setCities([]);

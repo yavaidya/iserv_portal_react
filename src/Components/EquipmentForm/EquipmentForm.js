@@ -14,6 +14,7 @@ import {
 	Divider,
 	Drawer,
 	FormControl,
+	FormControlLabel,
 	IconButton,
 	MenuItem,
 	Paper,
@@ -22,6 +23,7 @@ import {
 	StepContent,
 	StepLabel,
 	Stepper,
+	Switch,
 	TextField,
 	Tooltip,
 	Typography,
@@ -40,7 +42,11 @@ import moment from "moment";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
 import Swal from "sweetalert2";
-import { createEquipmentsService, fetchEquipmentByIdService } from "../../Services/equipmentService";
+import {
+	createEquipmentsService,
+	fetchEquipmentByIdService,
+	fetchEquipmentTypesService,
+} from "../../Services/equipmentService";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import { useRef } from "react";
 import DocumentsForm from "../DocumentsForm/DocumentsForm";
@@ -95,10 +101,7 @@ const EquipmentForm = ({
 		{ label: "Documents Provisioning", description: "Provision documnets to this equipment", required: false },
 		{ label: "Customer(s) Provision", description: "Provision this equipment to customers", required: false },
 	];
-	const formTitle = isEditing ? `Editing Equipment: ${formData.equipmentName}` : "Add New Equipment";
-	const formSubTitle = isEditing
-		? "Please fill out the following to update equipment"
-		: "Please fill out the following to add a new equipment";
+
 	const step0Ref = useRef(null);
 	const initialFormDataRef = useRef();
 	const { flexCol, flexRow } = useCustomTheme();
@@ -115,7 +118,9 @@ const EquipmentForm = ({
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [expanded, setExpanded] = useState("available");
 	const [provisionFormOpen, setProvisionFormOpen] = useState(false);
+	const [showParentOption, setShowParentOption] = useState(false);
 	const [moveAlert, setMoveAlert] = useState(false);
+	const [equipmentTypes, setEquipmentTypes] = useState([]);
 	const [formErrors, setFormErrors] = useState({
 		equipmentName: false,
 		equipmentParent: false,
@@ -123,23 +128,81 @@ const EquipmentForm = ({
 		isPublic: false,
 		status: false,
 	});
+	const [formTitle, setFormTitle] = useState(
+		isEditing ? `Editing Equipment: ${formData.equipmentName}` : `Add New Equipment`
+	);
 	const [parentEqDocs, setParentEqDocs] = useState([]);
+	const [parentEqDocIds, setParentEqDocIds] = useState([]);
+	const [shouldTriggerMoveAlert, setShouldTriggerMoveAlert] = useState(false);
+
+	const formSubTitle = isEditing
+		? "Please fill out the following to update equipment"
+		: "Please fill out the following to add a new equipment";
 
 	const handleAccordianChange = (panel) => (event, isExpanded) => {
 		setExpanded(isExpanded ? panel : false);
 	};
 
 	useEffect(() => {
-		if (equipments.length > 0) {
-			const eqs = equipments.map((eq) => ({
-				id: eq.id,
-				label: eq.name,
-			}));
-			const updatedList = [{ id: 0, label: "-- Top Level --" }, ...eqs];
-			setEqList(updatedList);
-		}
+		fetchEquipmentTypes();
 		fetchDocuments();
 	}, []);
+
+	useEffect(() => {
+		if (shouldTriggerMoveAlert) {
+			setMoveAlert(true);
+			setShouldTriggerMoveAlert(false); // Reset
+		}
+	}, [shouldTriggerMoveAlert]);
+
+	const fetchEquipmentTypes = async () => {
+		try {
+			const response = await fetchEquipmentTypesService();
+			console.log(response);
+			if (response.status) {
+				const typeOptions = response.data
+					.filter((type) => type.key !== "max_levels")
+					.map((type) => ({
+						label: type.value,
+						value: type.key,
+					}));
+				setEquipmentTypes(typeOptions);
+				// setLoading(false);
+			} else {
+				setError("Failed Fetching Customer Users");
+				setEquipmentTypes([]);
+				// setLoading(false);
+			}
+		} catch (error) {
+			setError("Failed Fetching Customer Users");
+			// setLoading(false);
+			setEquipmentTypes([]);
+		}
+	};
+
+	useEffect(() => {
+		if (formData.level && formData.level !== "" && formData.level !== "level_1") {
+			if (equipments.length > 0) {
+				const levelParts = formData.level.split("_");
+				const currentLevelNum = parseInt(levelParts[1], 10);
+				const parentLevel = `level_${currentLevelNum - 1}`;
+				console.log("Eqs from Form: ", equipments);
+				const eqs = equipments
+					.filter((eq) => eq.level_key === parentLevel)
+					.map((eq) => ({
+						id: eq.id,
+						label: eq.name,
+					}));
+				setEqList(eqs);
+				setFormData((prev) => ({ ...prev, equipmentParent: { id: 0, label: "Select Parent" } }));
+				const levelValue = equipmentTypes.find((et) => et.key === formData.level)?.value || "";
+				setFormTitle(`Add New Equipment ${levelValue}`);
+				setShowParentOption(true);
+			}
+		} else {
+			setShowParentOption(false);
+		}
+	}, [formData.level]);
 
 	useEffect(() => {
 		if (formOpen) {
@@ -197,6 +260,7 @@ const EquipmentForm = ({
 		});
 
 		setParentEqDocs(parentDocs);
+		setParentEqDocIds(kbIdArray);
 	};
 
 	const extractDocs = (equipment) => {
@@ -374,6 +438,41 @@ const EquipmentForm = ({
 		}
 	};
 
+	const handleParentInheritChange = () => {
+		setFormData((prev) => {
+			if (prev.parentDocsInherit) {
+				// Turning OFF inheritance
+				return {
+					...prev,
+					parentDocsInherit: false,
+					parent_doc_ids: [],
+				};
+			} else {
+				// Turning ON inheritance
+				const selectedOverlap = (prev.selected_doc_ids || []).some((id) => parentEqDocIds.includes(id));
+				const docOverlap = (prev.documents || []).some((doc) => parentEqDocIds.includes(doc.kb_id));
+
+				if (selectedOverlap || docOverlap) {
+					setShouldTriggerMoveAlert(true); // trigger outside render
+				}
+
+				const updatedSelectedDocIds = (prev.selected_doc_ids || []).filter(
+					(id) => !parentEqDocIds.includes(id)
+				);
+
+				const updatedDocs = (prev.documents || []).filter((doc) => !parentEqDocIds.includes(doc.kb_id));
+
+				return {
+					...prev,
+					parentDocsInherit: true,
+					parent_doc_ids: parentEqDocIds,
+					selected_doc_ids: updatedSelectedDocIds,
+					documents: updatedDocs,
+				};
+			}
+		});
+	};
+
 	const handleSubmit = async (data) => {
 		setIsSubmitting(true);
 		console.log("Final form data:", data);
@@ -390,7 +489,7 @@ const EquipmentForm = ({
 		if (isEditing) {
 			console.log("Editing: ", req_body);
 		} else {
-			const response = await createEquipmentsService(req_body);
+			const response = await createEquipmentsService(data);
 			if (response.status) {
 				setIsSubmitting(false);
 				await fetchEquipments();
@@ -400,7 +499,7 @@ const EquipmentForm = ({
 				setActiveStep(0);
 				setFormData({
 					equipmentName: "",
-					equipmentParent: { id: 0, label: "-- Top Level --" },
+					equipmentParent: { id: 0, label: "Select Parent" },
 					internalNotes: "",
 					isPublic: true,
 					status: "0",
@@ -408,12 +507,15 @@ const EquipmentForm = ({
 					provisions: [],
 					selected_doc_ids: [],
 					parent_doc_ids: [],
+					parentDocsInherit: true,
 				});
 				Swal.fire({
 					icon: "success",
 					title: "Success",
 					text: response.message,
 				});
+			} else {
+				setIsSubmitting(false);
 			}
 		}
 	};
@@ -427,7 +529,7 @@ const EquipmentForm = ({
 			setActiveStep(0);
 			setFormData({
 				equipmentName: "",
-				equipmentParent: { id: 0, label: "-- Top Level --" },
+				equipmentParent: { id: 0, label: "Select Parent" },
 				internalNotes: "",
 				isPublic: true,
 				status: "0",
@@ -435,6 +537,7 @@ const EquipmentForm = ({
 				provisions: [],
 				selected_doc_ids: [],
 				parent_doc_ids: [],
+				parentDocsInherit: true,
 			});
 			return;
 		}
@@ -453,7 +556,7 @@ const EquipmentForm = ({
 				setActiveStep(0);
 				setFormData({
 					equipmentName: "",
-					equipmentParent: { id: 0, label: "-- Top Level --" },
+					equipmentParent: { id: 0, label: "Select Parent" },
 					internalNotes: "",
 					isPublic: true,
 					status: "0",
@@ -461,6 +564,7 @@ const EquipmentForm = ({
 					provisions: [],
 					selected_doc_ids: [],
 					parent_doc_ids: [],
+					parentDocsInherit: true,
 				});
 			}
 		});
@@ -533,17 +637,26 @@ const EquipmentForm = ({
 								justifyContent: "space-between",
 								width: "100%",
 								mb: 1,
+								px: 2,
+								py: 1,
 							}}>
-							<Tooltip title={drawerForm ? "Open in Full Screen" : "Open in Drawer"}>
-								<IconButton size="small" onClick={() => setDrawerForm(!drawerForm)}>
-									{drawerForm ? <OpenInFullIcon /> : <CloseFullscreenIcon />}
-								</IconButton>
-							</Tooltip>
-							<Tooltip title="Close the Form">
-								<IconButton size="small" onClick={handleCloseForm}>
-									<CloseIcon />
-								</IconButton>
-							</Tooltip>
+							<PageHeader title={formTitle} subtitle={formSubTitle} />
+							<Box
+								sx={{
+									...flexRow,
+									justifyContent: "flex-end",
+								}}>
+								<Tooltip title={drawerForm ? "Open in Full Screen" : "Open in Drawer"}>
+									<IconButton size="small" onClick={() => setDrawerForm(!drawerForm)}>
+										{drawerForm ? <OpenInFullIcon /> : <CloseFullscreenIcon />}
+									</IconButton>
+								</Tooltip>
+								<Tooltip title="Close the Form">
+									<IconButton size="small" onClick={handleCloseForm}>
+										<CloseIcon />
+									</IconButton>
+								</Tooltip>
+							</Box>
 						</Box>
 					) : (
 						<Box
@@ -581,7 +694,6 @@ const EquipmentForm = ({
 							py: 1,
 							minHeight: 0, // Required to ensure flexGrow + overflow works properly
 						}}>
-						<PageHeader title={formTitle} subtitle={formSubTitle} />
 						{error && (
 							<Alert severity="error" sx={{ width: "100%", my: 2 }}>
 								{error}
@@ -627,26 +739,39 @@ const EquipmentForm = ({
 										inputRef={textFieldRef}
 									/>
 
-									<Box display="flex" alignItems="center">
-										<Box width="200px" minWidth="200px">
-											<Typography variant="body1" fontWeight={"bold"}>
-												Equipment Parent:
-											</Typography>
+									<FormField
+										type={"select"}
+										label={"Equipment Type"}
+										name={"level"}
+										value={formData.level}
+										error={formErrors.level}
+										onChange={handleFormChange}
+										showRequired
+										options={equipmentTypes}
+									/>
+
+									{showParentOption && (
+										<Box display="flex" alignItems="center">
+											<Box width="200px" minWidth="200px">
+												<Typography variant="body1" fontWeight={"bold"}>
+													Equipment Parent:
+												</Typography>
+											</Box>
+											<Autocomplete
+												options={eqList}
+												value={formData.equipmentParent}
+												isOptionEqualToValue={(option, value) => option.id === value.id}
+												onChange={(event, newValue) =>
+													handleFormChange({
+														target: { name: "equipmentParent", value: newValue },
+													})
+												}
+												getOptionLabel={(option) => option.label || ""}
+												sx={{ width: "100%" }}
+												renderInput={(params) => <TextField {...params} size="small" />}
+											/>
 										</Box>
-										<Autocomplete
-											options={eqList}
-											value={formData.equipmentParent}
-											isOptionEqualToValue={(option, value) => option.id === value.id}
-											onChange={(event, newValue) =>
-												handleFormChange({
-													target: { name: "equipmentParent", value: newValue },
-												})
-											}
-											getOptionLabel={(option) => option.label || ""}
-											sx={{ width: "100%" }}
-											renderInput={(params) => <TextField {...params} size="small" />}
-										/>
-									</Box>
+									)}
 
 									<FormField
 										type={"textarea"}
@@ -809,52 +934,72 @@ const EquipmentForm = ({
 											alignItems="flex-start"
 											width="100%"
 											mt={2}>
-											<Box mb={2}>
-												<Typography variant="body1" fontWeight={"bold"}>
-													Parent Equipment Documents
-												</Typography>
-												<Typography
-													variant="body1"
-													fontSize={"11px"}
-													color="text.secondary"
-													m={0}>
-													List of all the documents inherited from the parent equipment
-												</Typography>
+											<Box
+												sx={{
+													...flexRow,
+													justifyContent: "space-between",
+													alignItems: "flex-start",
+													width: "100%",
+													mb: 2,
+												}}>
+												<Box>
+													<Typography variant="body1" fontWeight={"bold"}>
+														Parent Equipment Documents
+													</Typography>
+													<Typography
+														variant="body1"
+														fontSize={"11px"}
+														color="text.secondary"
+														m={0}>
+														List of all the documents inherited from the parent equipment
+													</Typography>
+												</Box>
+
+												<FormControlLabel
+													control={
+														<Switch
+															checked={formData.parentDocsInherit}
+															onChange={handleParentInheritChange}
+														/>
+													}
+													label="Inherit Parent Documents"
+												/>
 											</Box>
-											{parentEqDocs.map((category, index) => {
-												const panelId = `parent-${index}`;
-												return (
-													<Accordion
-														key={panelId}
-														sx={{ width: "100%" }}
-														expanded={expanded === panelId}
-														onChange={handleAccordianChange(panelId)}>
-														<AccordionSummary
-															expandIcon={<ExpandMoreIcon />}
-															aria-controls={`${panelId}-content`}
-															id={`${panelId}-header`}>
-															<Typography variant="body1" fontWeight="bold">
-																{category.category_name}
-															</Typography>
-														</AccordionSummary>
-														<AccordionDetails>
-															{category.docs.map((doc) => (
-																<>
-																	<Box>
-																		<DocumentCard
-																			data={doc}
-																			showCategory={false}
-																			showDelete={false}
-																			key={`${doc.title}_${doc?.kb_id}`}
-																			origin="equipment"
-																		/>
-																	</Box>
-																</>
-															))}
-														</AccordionDetails>
-													</Accordion>
-												);
-											})}
+											{formData.parentDocsInherit &&
+												parentEqDocs.map((category, index) => {
+													const panelId = `parent-${index}`;
+													return (
+														<Accordion
+															key={panelId}
+															sx={{ width: "100%" }}
+															expanded={expanded === panelId}
+															onChange={handleAccordianChange(panelId)}>
+															<AccordionSummary
+																expandIcon={<ExpandMoreIcon />}
+																aria-controls={`${panelId}-content`}
+																id={`${panelId}-header`}>
+																<Typography variant="body1" fontWeight="bold">
+																	{category.category_name}
+																</Typography>
+															</AccordionSummary>
+															<AccordionDetails>
+																{category.docs.map((doc) => (
+																	<>
+																		<Box>
+																			<DocumentCard
+																				data={doc}
+																				showCategory={false}
+																				showDelete={false}
+																				key={`${doc.title}_${doc?.kb_id}`}
+																				origin="equipment"
+																			/>
+																		</Box>
+																	</>
+																))}
+															</AccordionDetails>
+														</Accordion>
+													);
+												})}
 										</Box>
 									)}
 								</Box>

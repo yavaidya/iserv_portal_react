@@ -23,6 +23,11 @@ import Agents from "../../Pages/Agents/Agents";
 import EquipmentDetails from "../../Pages/EquipmentDetails/EquipmentDetails";
 import DocumentCategories from "../../Pages/DocumentCategories/DocumentCategories";
 import Documents from "../../Pages/Documents/Documents";
+import Provisions from "../../Pages/Provisions/Provisions";
+import ProvisionDetails from "../../Pages/ProvisionDetails/ProvisionDetails";
+import CustomerDetails from "../../Pages/CustomerDetails/CustomerDetails";
+import NewTicket from "../../Pages/NewTicket/NewTicket";
+import NewTicketForm from "../../Pages/NewTicketForm/NewTicketForm";
 const HorizontalLayout = () => {
 	const { userMode } = useAuth();
 	const { flexCol, flexRow } = useCustomTheme();
@@ -114,7 +119,7 @@ const HorizontalLayout = () => {
 										px: 1,
 										borderRadius: 2,
 										boxShadow: "0 0 20px 0px rgba(0,0,0,0.1)",
-										minHeight: "400px",
+										minHeight: "500px",
 									}}>
 									<Routes>
 										{/* {dynamicRoutes.map(({ path, component }) => (
@@ -124,12 +129,17 @@ const HorizontalLayout = () => {
 										<Route path="/settings" element={<ThemeCustomizer />} />
 										<Route path="/profile" element={<Profile />} />
 										<Route path="/customers" element={<Customers />} />
+										<Route path="/customers/:cus_id" element={<CustomerDetails />} />
 										<Route path="/document-categories" element={<DocumentCategories />} />
 										<Route path="/documents" element={<Documents />} />
 										<Route path="/equipments" element={<Equipments />} />
+										<Route path="/provisions" element={<Provisions />} />
+										<Route path="/provisions/:prov_id" element={<ProvisionDetails />} />
 										<Route path="/equipments/:eq_id" element={<EquipmentDetails />} />
 										<Route path="/staff" element={<Agents />} />
 										<Route path="/tickets" element={<Tickets />} />
+										<Route path="/tickets/new-ticket" element={<NewTicket />} />
+										<Route path="/tickets/new-ticket-v2" element={<NewTicketForm />} />
 										<Route path="/users" element={<CustomerUsers />} />
 										<Route path="/*" element={<PageNotFound />} />
 									</Routes>

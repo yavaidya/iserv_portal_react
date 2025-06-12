@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { usePageTitle } from "../../Context/PageTitleContext";
 import { Alert, Box, CircularProgress, Tooltip } from "@mui/material";
-import { fetchCustomersService } from "../../Services/customerService";
+import { fetchCustomerByIdService, fetchCustomersService } from "../../Services/customerService";
 import CustomDatagrid from "../../Components/CustomDatagrid/CustomDatagrid";
 import { error } from "jodit/esm/core/helpers";
 import { useCustomTheme } from "../../Context/ThemeContext";
@@ -13,6 +13,7 @@ import ErrorAlertWrapper from "../../Components/ErrorAlertWrapper/ErrorAlertWrap
 import { formatDate } from "../../Services/globalServiceUtils";
 import CustomerForm from "../../Components/CustomerForm/CustomerForm";
 import EntityWrapper from "../../Components/EntityWrapper/EntityWrapper";
+import { useNavigate } from "react-router-dom";
 
 const Customer = () => {
 	const { setActiveTitle } = usePageTitle();
@@ -36,6 +37,7 @@ const Customer = () => {
 	const [error, setError] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [isEditing, setIsEditing] = useState(false);
+	const navigate = useNavigate();
 	const columns = [
 		{
 			field: "name",
@@ -141,6 +143,57 @@ const Customer = () => {
 		},
 	];
 
+	const handleEditCustomer = async (row) => {
+		console.log("Editing", row);
+
+		const response = await fetchCustomerByIdService(row.id);
+		if (response.status) {
+			const cusData = response.data;
+			setCusFormData({
+				customer_name: cusData?.name || "",
+				phone: cusData?.phone || "",
+				website: cusData?.website || "",
+				manager: cusData?.manager || null,
+				status: cusData?.status || "0",
+				users: cusData.org_users.map((user) => ({
+					name: "",
+					first_name: user?.firstname || "",
+					last_name: user?.lastname || "",
+					email: user?.emails[0]?.address || "",
+					customer: user.org_id,
+					status: user?.status || "0",
+					notes: "",
+					username: "",
+					sendActivationEmail: true,
+				})),
+				sites: cusData.org_sites.map((site) => ({
+					site_name: site.site_name,
+					street1: site.street1,
+					street2: site.street2,
+					city: site.city,
+					state: site.state,
+					country: site.country,
+					zip: site.zip,
+					address: site.address,
+					isDefault: false,
+				})),
+				provisions: cusData.org_equipments.map((prov) => ({
+					customer: prov.org_id,
+					equipment: prov.eq_id,
+					site: prov.site_id,
+					provisionedDate: prov.commission_date,
+					serialNumber: prov.serial_number,
+					equipment_name: prov.equipment.equipment,
+					site_name: "Sherbrooke",
+				})),
+				internalNotes: cusData?.notes || "",
+			});
+		}
+		setIsEditing(true);
+		handleOpenForm();
+		console.log(response);
+	};
+
 	useEffect(() => {
 		fetchCustomers();
 	}, []);
@@ -182,6 +235,7 @@ const Customer = () => {
 
 	const handleRowClick = (params) => {
 		console.log("Row clicked:", params.row);
+		navigate(`/customers/${params.row.id}`);
 	};
 
 	if (loading) {
@@ -205,12 +259,15 @@ const Customer = () => {
 			onRowClick={handleRowClick}
 			checkboxSelection={true}
 			customButtons={customButtons}
+			handleEdit={handleEditCustomer}
 			sortBy={[{ field: "created", sort: "desc" }]}
 			formProps={{
 				formOpen: cusFormOpen,
 				setFormOpen: setCusFormOpen,
 				formData: cusFormData,
 				setFormData: setCusFormData,
+				setParentData: setCustomers,
+				fetchParentData: fetchCustomers,
 				activeStep,
 				setActiveStep,
 				isEditing,

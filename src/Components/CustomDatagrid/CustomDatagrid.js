@@ -51,6 +51,7 @@ const CustomDatagrid = ({
 	handleEdit = null,
 	handleDuplicate = null,
 	handleDelete = null,
+	listLoading = false,
 }) => {
 	const [searchText, setSearchText] = useState("");
 	const [filteredData, setFilteredData] = useState(data);
@@ -73,13 +74,13 @@ const CustomDatagrid = ({
 		}
 	};
 
-	useEffect(() => {
-		if (filteredData.length <= 0) {
-			setLoading(true);
-		} else {
-			setLoading(false);
-		}
-	}, [filteredData]);
+	// useEffect(() => {
+	// 	if (filteredData.length <= 0) {
+	// 		setLoading(true);
+	// 	} else {
+	// 		setLoading(false);
+	// 	}
+	// }, [filteredData]);
 
 	useEffect(() => {
 		if (data.length <= 0) {
@@ -322,7 +323,7 @@ const CustomDatagrid = ({
 			{/* DataGrid */}
 			<div style={{ width: "100%", height: "inherit" }}>
 				<DataGrid
-					loading={loading}
+					// loading={loading}
 					rows={filteredData}
 					columns={showActions ? [...columns, ...actions] : columns}
 					initialState={{
@@ -345,7 +346,7 @@ const CustomDatagrid = ({
 					// onRowSelectionModelChange={handleSelectionChange}
 					onPageChange={onPageChange}
 					autoHeight={true}
-					disableSelectionOnClick
+					disableRowSelectionOnClick
 					checkboxSelection={checkboxSelection} // Enable/Disable checkbox based on prop
 					getRowId={(row) => row?.[rowIdField] ?? row?.id}
 					sx={{

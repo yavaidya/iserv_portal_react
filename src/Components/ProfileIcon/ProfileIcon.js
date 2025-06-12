@@ -172,6 +172,8 @@ const ProfileIcon = ({ sideBarCollapsed = false, reverse = false, showMenu = tru
 								mt: iconClick ? 1.5 : 0,
 								ml: iconClick ? 0 : 4,
 								mb: iconClick ? 0 : 4,
+								width: "auto",
+								minWidth: "175px",
 							},
 						},
 					}}
@@ -185,12 +187,22 @@ const ProfileIcon = ({ sideBarCollapsed = false, reverse = false, showMenu = tru
 							? { horizontal: "right", vertical: "bottom" }
 							: { horizontal: "left", vertical: "top" }
 					}>
-					{menuOptions.map((option, index) => (
-						<MenuItem key={index} onClick={() => handleMenuItemClick(option.path)}>
-							<ListItemIcon>{option.icon}</ListItemIcon>
-							<ListItemText>{option.label}</ListItemText>
-						</MenuItem>
-					))}
+					{menuOptions.map((option, index) => {
+						const items = [];
+
+						if (option.label === "Logout") {
+							items.push(<Divider key={`divider-${index}`} />);
+						}
+
+						items.push(
+							<MenuItem key={`menu-item-${index}`} onClick={() => handleMenuItemClick(option.path)}>
+								<ListItemIcon>{option.icon}</ListItemIcon>
+								<ListItemText>{option.label}</ListItemText>
+							</MenuItem>
+						);
+
+						return items;
+					})}
 				</Menu>
 			</Box>
 		</>

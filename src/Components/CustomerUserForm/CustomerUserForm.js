@@ -28,6 +28,7 @@ const CustomerUserForm = ({
 	formOpen,
 	setFormOpen,
 	setParentData = null,
+	fetchParentData = null,
 	showCustomer = true,
 	createUser = true,
 	showStaticCustomer = false,
@@ -190,16 +191,8 @@ const CustomerUserForm = ({
 			const response = await createCustomerUsersService(req_body);
 			console.log(response);
 			if (response.status) {
-				if (setParentData) {
-					console.log("Setting New USers");
-					const customerUserCounts = response.data.map((customer) => ({
-						id: customer.id,
-						name: customer.name,
-						organization: customer?.organization?.name || "",
-						created: customer.createdAt,
-					}));
-					console.log(customerUserCounts.length);
-					setParentData(customerUserCounts);
+				if (fetchParentData) {
+					await fetchParentData();
 				}
 				if (!addNew) {
 					setFormOpen(false);
@@ -299,18 +292,13 @@ const CustomerUserForm = ({
 					justifyContent: "space-between",
 					width: "100%",
 				}}>
-				<Tooltip title="Close the Form">
-					<Button startIcon={<ArrowBackIcon />} sx={{ pl: 0 }} onClick={handleCloseForm}>
-						Close Form
-					</Button>
-				</Tooltip>
+				<PageHeader title={formTitle} subtitle={formSubTitle} />
 				<Tooltip title="Close the Form">
 					<IconButton size="small" onClick={handleCloseForm}>
 						<CloseIcon />
 					</IconButton>
 				</Tooltip>
 			</Box>
-			<PageHeader title={formTitle} subtitle={formSubTitle} />
 
 			{alert && (
 				<Alert severity="error" sx={{ mb: 2 }}>

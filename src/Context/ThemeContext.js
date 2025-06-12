@@ -122,6 +122,7 @@ export const ThemeContextProvider = ({ children }) => {
 				flexRow,
 				fontKey,
 				fontOptions: Object.keys(fonts),
+				theme,
 			}}>
 			<ThemeProvider theme={theme}>
 				<CssBaseline />

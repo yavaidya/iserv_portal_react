@@ -1,11 +1,5 @@
-import customHttp from "../Utilities/customHTTP";
+import { handleRequest } from "../Utilities/requestHandler";
 
-export const fetchTicketsService = async (req_body) => {
-	try {
-		const response = await customHttp.post("/user_tickets.php", req_body);
-		return response;
-	} catch (error) {
-		console.log(error);
-		return error.response;
-	}
-};
+export const fetchTicketsService = (req_body) => handleRequest("post", "/tickets/get-all-tickets", req_body);
+
+export const createTicketsService = (req_body) => handleRequest("post", "/tickets/create", req_body);
