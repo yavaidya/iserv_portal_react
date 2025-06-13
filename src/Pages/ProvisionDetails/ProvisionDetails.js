@@ -8,6 +8,7 @@ import {
 	Card,
 	CardContent,
 	Chip,
+	Divider,
 	Grid,
 	Link,
 	Tab,
@@ -153,7 +154,7 @@ const ProvisionDetails = () => {
 	return (
 		<Box p={2} px={4} width={"100%"}>
 			<Box display="flex" flexDirection="row" justifyContent="space-between" alignItems="center" width="100%">
-				<Button variant="text" onClick={handleNavigateBack} startIcon={<ArrowBackIcon />}>
+				<Button variant="outlined" onClick={handleNavigateBack} startIcon={<ArrowBackIcon />}>
 					Back
 				</Button>
 				<Box sx={{ ...flexRow, justifyContent: "flex-end", alignItems: "center", columnGap: 1 }}>
@@ -166,30 +167,29 @@ const ProvisionDetails = () => {
 				</Box>
 			</Box>
 			<Box width="100%" mx="auto" my={2}>
-				{/* Top Row: Two Side-by-Side Boxes */}
 				<Box display="flex" flexWrap="wrap" gap={2} mb={2}>
-					{/* Left Box */}
 					<Box
 						flex={1}
 						minWidth={300}
-						border="1px solid #eee"
-						borderRadius={2}
+						borderRadius={3}
+						sx={{ background: (theme) => theme.palette.background.paper }}
 						boxShadow="0 1px 4px rgba(0,0,0,0.08)"
-						p={2}>
-						<InfoRow label="Organization" value={provision?.organization?.name} />
+						py={2}
+						px={3}>
+						<InfoRow label="Customer" value={provision?.organization?.name} />
 						<InfoRow label="Serial Number" value={provision.serial_number} />
 						<InfoRow label="Commission Date" value={formatDate(provision.commission_date)} />
-						<InfoRow label="Org Address" value={provision?.organization?.address || "-"} />
+						<InfoRow label="Customer Address" value={provision?.organization?.address || "-"} />
 					</Box>
 
-					{/* Right Box */}
 					<Box
 						flex={1}
 						minWidth={300}
-						border="1px solid #eee"
-						borderRadius={2}
+						borderRadius={3}
 						boxShadow="0 1px 4px rgba(0,0,0,0.08)"
-						p={2}>
+						sx={{ background: (theme) => theme.palette.background.paper }}
+						py={2}
+						px={3}>
 						<InfoRow label="Equipment Name" value={provision?.equipment?.equipment || "NA"} />
 						<InfoRow label="Listing Type" value={provision.ispublic ? "Public" : "Private"} />
 						<InfoRow
@@ -218,217 +218,232 @@ const ProvisionDetails = () => {
 				</Box>
 
 				{/* Notes Box */}
-				<Box border="1px solid #eee" borderRadius={2} boxShadow="0 1px 4px rgba(0,0,0,0.08)" p={2}>
-					<Typography fontWeight={"bold"} gutterBottom>
-						Notes
-					</Typography>
-					<Typography>{provision.notes || "-"}</Typography>
-				</Box>
 			</Box>
-			<Tabs
-				sx={{ borderBottom: "1px solid #eee" }}
-				value={tabIndex}
-				onChange={handleTabChange}
-				aria-label="Profile Tabs"
-				textColor="primary"
-				indicatorColor="primary">
-				<Tab label="Documents" />
-				<Tab label="Tickets" />
-				<Tab label="QR Code" />
-			</Tabs>
+			<Box
+				sx={{ background: (theme) => theme.palette.background.paper }}
+				borderRadius={3}
+				minHeight={"400px"}
+				boxShadow="0 1px 4px rgba(0,0,0,0.08)"
+				mb={2}
+				py={2}
+				px={3}>
+				<Tabs
+					sx={{ borderBottom: "1px solid #eee" }}
+					value={tabIndex}
+					onChange={handleTabChange}
+					aria-label="Profile Tabs"
+					textColor="primary"
+					indicatorColor="primary">
+					<Tab label="Documents" />
+					<Tab label="Tickets" />
+					<Tab label="QR Code" />
+				</Tabs>
 
-			<TabPanel value={tabIndex} index={0}>
-				<Box
-					sx={{
-						...flexCol,
-						justifyContent: "flex-start",
-						alignItems: "flex-start",
-						width: "100%",
-						rowGap: 2,
-					}}>
+				<TabPanel value={tabIndex} index={0}>
 					<Box
-						display="flex"
-						flexDirection="row"
-						justifyContent="flex-start"
-						alignItems="center"
-						width="100%">
-						<Box>
-							<Typography variant="h5" fontWeight={"bold"}>
-								Equipment Documents
-							</Typography>
-							<Typography variant="body1" m={0}>
-								List of all the documents assigned to this equipment or its parents
-							</Typography>
+						sx={{
+							...flexCol,
+							justifyContent: "flex-start",
+							alignItems: "flex-start",
+							width: "100%",
+							rowGap: 2,
+						}}>
+						<Box
+							display="flex"
+							flexDirection="row"
+							justifyContent="flex-start"
+							alignItems="center"
+							width="100%">
+							<Box>
+								<Typography variant="h5" fontWeight={"bold"}>
+									Equipment Documents
+								</Typography>
+								<Typography variant="body1" m={0}>
+									List of all the documents assigned to this equipment or its parents
+								</Typography>
+							</Box>
 						</Box>
-					</Box>
-					<Box
-						display="flex"
-						flexDirection="column"
-						justifyContent="flex-start"
-						alignItems="flex-start"
-						width="100%">
-						{equipmentDocs.length > 0 ? (
-							equipmentDocs.map((category, index) => {
-								const panelId = `equipment-${index}`;
-								return (
-									<Accordion
-										key={panelId}
-										sx={{ width: "100%" }}
-										elevation={3}
-										expanded={true}
-										onChange={handleAccordianChange(panelId)}>
-										<AccordionSummary
-											sx={{ borderBottom: "1px solid #eee" }}
-											expandIcon={<ExpandMoreIcon />}
-											aria-controls={`${panelId}-content`}
-											id={`${panelId}-header`}>
-											<Typography variant="h6" fontWeight="bold" margin={0}>
-												{category.category_name}
-											</Typography>
-										</AccordionSummary>
-										<AccordionDetails sx={{ p: 2 }}>
-											{category.docs.map((doc) => (
-												<>
-													<Box>
-														<DocumentCard
-															data={doc}
-															showCategory={false}
-															showDelete={false}
-															key={`${doc.title}_${doc.id}`}
-														/>
-													</Box>
-												</>
-											))}
-										</AccordionDetails>
-									</Accordion>
-								);
-							})
-						) : (
-							<Alert severity="info" sx={{ width: "100%", mt: 1 }}>
-								No Assigned Documents
-							</Alert>
-						)}
-					</Box>
-
-					{parentEquipmentDocs.length > 0 && (
 						<Box
 							display="flex"
 							flexDirection="column"
 							justifyContent="flex-start"
 							alignItems="flex-start"
 							width="100%">
-							<Box mb={2}>
-								<Typography variant="h5" fontWeight={"bold"}>
-									Parent Equipment Documents
-								</Typography>
-								<Typography variant="body1" m={0}>
-									List of all the documents inherited from the parent equipment
-								</Typography>
+							{equipmentDocs.length > 0 ? (
+								equipmentDocs.map((category, index) => {
+									const panelId = `equipment-${index}`;
+									return (
+										<Accordion
+											key={panelId}
+											sx={{ width: "100%" }}
+											elevation={3}
+											expanded={true}
+											onChange={handleAccordianChange(panelId)}>
+											<AccordionSummary
+												sx={{ borderBottom: "1px solid #eee" }}
+												expandIcon={<ExpandMoreIcon />}
+												aria-controls={`${panelId}-content`}
+												id={`${panelId}-header`}>
+												<Typography variant="h6" fontWeight="bold" margin={0}>
+													{category.category_name}
+												</Typography>
+											</AccordionSummary>
+											<AccordionDetails sx={{ p: 2 }}>
+												{category.docs.map((doc) => (
+													<>
+														<Box>
+															<DocumentCard
+																data={doc}
+																showCategory={false}
+																showDelete={false}
+																key={`${doc.title}_${doc.id}`}
+															/>
+														</Box>
+													</>
+												))}
+											</AccordionDetails>
+										</Accordion>
+									);
+								})
+							) : (
+								<Alert severity="info" sx={{ width: "100%", mt: 1 }}>
+									No Assigned Documents
+								</Alert>
+							)}
+						</Box>
+
+						{parentEquipmentDocs.length > 0 && (
+							<Box
+								display="flex"
+								flexDirection="column"
+								justifyContent="flex-start"
+								alignItems="flex-start"
+								width="100%">
+								<Box mb={2}>
+									<Typography variant="h5" fontWeight={"bold"}>
+										Parent Equipment Documents
+									</Typography>
+									<Typography variant="body1" m={0}>
+										List of all the documents inherited from the parent equipment
+									</Typography>
+								</Box>
+								{parentEquipmentDocs.map((category, index) => {
+									const panelId = `parent-${index}`;
+									return (
+										<Accordion
+											key={panelId}
+											sx={{ width: "100%" }}
+											expanded={expanded === panelId}
+											onChange={handleAccordianChange(panelId)}>
+											<AccordionSummary
+												expandIcon={<ExpandMoreIcon />}
+												aria-controls={`${panelId}-content`}
+												id={`${panelId}-header`}>
+												<Typography variant="body1" fontWeight="bold">
+													{category.category_name}
+												</Typography>
+											</AccordionSummary>
+											<AccordionDetails>
+												{category.docs.map((doc) => (
+													<>
+														<Box>
+															<DocumentCard
+																data={doc}
+																showCategory={false}
+																showDelete={false}
+																key={`${doc.title}_${doc.id}`}
+															/>
+														</Box>
+													</>
+												))}
+											</AccordionDetails>
+										</Accordion>
+									);
+								})}
 							</Box>
-							{parentEquipmentDocs.map((category, index) => {
-								const panelId = `parent-${index}`;
-								return (
-									<Accordion
-										key={panelId}
-										sx={{ width: "100%" }}
-										expanded={expanded === panelId}
-										onChange={handleAccordianChange(panelId)}>
-										<AccordionSummary
-											expandIcon={<ExpandMoreIcon />}
-											aria-controls={`${panelId}-content`}
-											id={`${panelId}-header`}>
-											<Typography variant="body1" fontWeight="bold">
-												{category.category_name}
-											</Typography>
-										</AccordionSummary>
-										<AccordionDetails>
-											{category.docs.map((doc) => (
-												<>
-													<Box>
-														<DocumentCard
-															data={doc}
-															showCategory={false}
-															showDelete={false}
-															key={`${doc.title}_${doc.id}`}
-														/>
-													</Box>
-												</>
-											))}
-										</AccordionDetails>
-									</Accordion>
-								);
-							})}
-						</Box>
-					)}
-				</Box>
-			</TabPanel>
-
-			<TabPanel value={tabIndex} index={1}>
-				<Box
-					sx={{
-						...flexCol,
-						justifyContent: "flex-start",
-						alignItems: "flex-start",
-						width: "100%",
-						rowGap: 2,
-					}}>
-					<Box
-						display="flex"
-						flexDirection="row"
-						justifyContent="flex-start"
-						alignItems="center"
-						width="100%">
-						<Box>
-							<Typography variant="h5" fontWeight={"bold"}>
-								Equipment Tickets
-							</Typography>
-							<Typography variant="body1" m={0}>
-								List of all the Tickets for this Equipment
-							</Typography>
-						</Box>
+						)}
 					</Box>
-					<Alert severity="info" sx={{ width: "100%", mt: 1 }}>
-						No Tickets for this Equipment
-					</Alert>
-				</Box>
-			</TabPanel>
+				</TabPanel>
 
-			<TabPanel value={tabIndex} index={2}>
-				<Box
-					sx={{
-						...flexCol,
-						justifyContent: "flex-start",
-						alignItems: "flex-start",
-						width: "100%",
-						rowGap: 2,
-					}}>
-					<Box
-						display="flex"
-						flexDirection="row"
-						justifyContent="flex-start"
-						alignItems="center"
-						width="100%">
-						<Box>
-							<Typography variant="h5" fontWeight={"bold"}>
-								Equipment QR Code
-							</Typography>
-							<Typography variant="body1" m={0}>
-								This QR Code can be used from Mobile App to see the equipment Details
-							</Typography>
-						</Box>
-					</Box>
+				<TabPanel value={tabIndex} index={1}>
 					<Box
 						sx={{
-							...flexRow,
+							...flexCol,
 							justifyContent: "flex-start",
 							alignItems: "flex-start",
 							width: "100%",
-							mt: 2,
+							rowGap: 2,
 						}}>
-						<QRCode data={provision.serial_number} />
+						<Box
+							display="flex"
+							flexDirection="row"
+							justifyContent="flex-start"
+							alignItems="center"
+							width="100%">
+							<Box>
+								<Typography variant="h5" fontWeight={"bold"}>
+									Equipment Tickets
+								</Typography>
+								<Typography variant="body1" m={0}>
+									List of all the Tickets for this Equipment
+								</Typography>
+							</Box>
+						</Box>
+						<Alert severity="info" sx={{ width: "100%", mt: 1 }}>
+							No Tickets for this Equipment
+						</Alert>
 					</Box>
-				</Box>
-			</TabPanel>
+				</TabPanel>
+
+				<TabPanel value={tabIndex} index={2}>
+					<Box
+						sx={{
+							...flexCol,
+							justifyContent: "flex-start",
+							alignItems: "flex-start",
+							width: "100%",
+							rowGap: 2,
+						}}>
+						<Box
+							display="flex"
+							flexDirection="row"
+							justifyContent="flex-start"
+							alignItems="center"
+							width="100%">
+							<Box>
+								<Typography variant="h5" fontWeight={"bold"}>
+									Equipment QR Code
+								</Typography>
+								<Typography variant="body1" m={0}>
+									This QR Code can be used from Mobile App to see the equipment Details
+								</Typography>
+							</Box>
+						</Box>
+						<Box
+							sx={{
+								...flexRow,
+								justifyContent: "flex-start",
+								alignItems: "flex-start",
+								width: "100%",
+								mt: 2,
+							}}>
+							<QRCode data={provision.serial_number} />
+						</Box>
+					</Box>
+				</TabPanel>
+			</Box>
+			<Box
+				sx={{ background: (theme) => theme.palette.background.paper }}
+				borderRadius={3}
+				boxShadow="0 1px 4px rgba(0,0,0,0.08)"
+				py={2}
+				px={3}>
+				<Typography fontWeight={"bold"} variant="h6" gutterBottom>
+					Notes
+				</Typography>
+				<Divider flexItem sx={{ mt: "2px", mb: "10px" }} />
+				<Typography>{provision.notes || "-"}</Typography>
+			</Box>
 		</Box>
 	);
 };

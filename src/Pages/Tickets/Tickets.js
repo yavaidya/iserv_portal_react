@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { usePageTitle } from "../../Context/PageTitleContext";
-import { Alert, Box, Button, CircularProgress, Drawer, Tooltip } from "@mui/material";
+import { Alert, Box, Button, CircularProgress, Drawer, IconButton, Tab, Tabs, Tooltip } from "@mui/material";
 import { fetchTicketsService } from "../../Services/ticketsService";
 import CustomDatagrid from "../../Components/CustomDatagrid/CustomDatagrid";
 import { error } from "jodit/esm/core/helpers";
@@ -8,11 +8,20 @@ import { useCustomTheme } from "../../Context/ThemeContext";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import DeleteIcon from "@mui/icons-material/Delete";
 import NewTicketFormV2 from "../../Components/NewTicketFormV2/NewTicketFormV2";
+import { formatDate } from "../../Services/globalServiceUtils";
+import UserName from "../../Components/UserName/UserName";
+import CustomChip from "../../Components/CustomChip/CustomChip";
+import AddIcon from "@mui/icons-material/Add";
+import CounterCard from "../../Components/CounterCard/CounterCard";
+import LoadingWrapper from "../../Components/LoadingWrapper/LoadingWrapper";
+import ErrorAlertWrapper from "../../Components/ErrorAlertWrapper/ErrorAlertWrapper";
+import KanbanBoardComponent from "../../Components/KanbanBoard/KanbanBoard";
 
 const Tickets = () => {
 	const { setActiveTitle } = usePageTitle();
 	const { flexCol, flexRow } = useCustomTheme();
-	const [customers, setCustomers] = useState([]);
+	const [tickets, setTickets] = useState([]);
+	const [tabIndex, setTabIndex] = useState(0);
 	const [error, setError] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [formOpen, setFormOpen] = useState(false);
@@ -50,25 +59,21 @@ const Tickets = () => {
 				),
 		},
 		{
-			field: "department",
-			headerName: "Department",
-			width: 100,
+			field: "status",
+			headerName: "Status",
+			// width: 125,
 			align: "center",
 			headerAlign: "center",
-			renderCell: (params) => {
-				let statusText = "";
-				if (params.value === 0 || params.value === "0") {
-					statusText = `<span style="font-size: 11px; color: #aaa;">N/A</span>`;
-				} else {
-					statusText = `<span>${params.value}</span>`;
-				}
-				return <span dangerouslySetInnerHTML={{ __html: statusText }} />;
-			},
+			renderCell: (params) => (
+				<Box sx={{ ...flexCol, justifyContent: "center", alignItems: "center", width: "100%", height: "100%" }}>
+					<CustomChip text={params.value} />
+				</Box>
+			),
 		},
 		{
-			field: "equipment_id",
+			field: "equipment",
 			headerName: "Equipment",
-			width: 200,
+			// width: 175,
 			align: "center",
 			headerAlign: "center",
 			renderCell: (params) => {
@@ -84,37 +89,53 @@ const Tickets = () => {
 		{
 			field: "user",
 			headerName: "User",
-			width: 100,
+			width: 150,
 			align: "center",
 			headerAlign: "center",
-			renderCell: (params) => {
-				let statusText = "";
-				if (params.value === 0 || params.value === "0") {
-					statusText = `<span style="font-size: 11px; color: #aaa;">N/A</span>`;
-				} else {
-					statusText = `<span>${params.value}</span>`;
-				}
-				return <span dangerouslySetInnerHTML={{ __html: statusText }} />;
-			},
+			renderCell: (params) => (
+				<Box sx={{ ...flexCol, justifyContent: "center", alignItems: "center", width: "100%", height: "100%" }}>
+					<UserName name={params.value} />
+				</Box>
+			),
 		},
 		{
 			field: "staff",
 			headerName: "Staff",
-			width: 200,
+			width: 150,
 			align: "center",
 			headerAlign: "center",
-			renderCell: (params) => {
-				let statusText = "";
-				if (params.value === 0 || params.value === "0" || !params.value) {
-					statusText = `<span style="font-size: 11px; color: #aaa;">--Unassigned--</span>`;
-				} else {
-					statusText = `<span>${params.value}</span>`;
-				}
-				return <span dangerouslySetInnerHTML={{ __html: statusText }} />;
-			},
+			// renderCell: (params) => {
+			// 	let statusText = "";
+			// 	if (params.value === 0 || params.value === "0") {
+			// 		statusText = `<span style="font-size: 11px; color: #aaa;">N/A</span>`;
+			// 		return <span dangerouslySetInnerHTML={{ __html: statusText }} />;
+			// 	} else {
+			// 		statusText = <UserName name={params.value} />;
+			// 		return <UserName name={params.value} />;
+			// 	}
+			// },
+			renderCell: (params) => (
+				<Box sx={{ ...flexCol, justifyContent: "center", alignItems: "center", width: "100%", height: "100%" }}>
+					<UserName name={params.value} />
+				</Box>
+			),
 		},
-
-		{ field: "created", headerName: "Created", width: 200, align: "center", headerAlign: "center" },
+		{
+			field: "due_date",
+			headerName: "Due Date",
+			width: 175,
+			align: "center",
+			headerAlign: "center",
+			renderCell: (params) => formatDate(params.value),
+		},
+		{
+			field: "created",
+			headerName: "Created",
+			width: 175,
+			align: "center",
+			headerAlign: "center",
+			renderCell: (params) => formatDate(params.value),
+		},
 	];
 
 	const customButtons = [
@@ -122,14 +143,7 @@ const Tickets = () => {
 			label: "Create Ticket",
 			icon: <AddCircleOutlineIcon />,
 			onClick: () => {
-				console.log("Adding");
-			},
-		},
-		{
-			label: "",
-			icon: <DeleteIcon />,
-			onClick: () => {
-				console.log("Deleting");
+				setFormOpen(true);
 			},
 		},
 	];
@@ -138,45 +152,46 @@ const Tickets = () => {
 			title: "Tickets",
 			subtitle: "List of all the Tickets",
 		});
-		// fetchTickets();
+		fetchTickets();
 	}, []);
 
 	const fetchTickets = async () => {
 		setLoading(true);
 		try {
 			const req_body = {
-				user_id: "1",
-				flag: "",
-				status: "open",
-				role: "agent",
+				start_date: "1",
+				end_date: "",
 			};
 			const response = await fetchTicketsService(req_body);
-			if (response.data.status) {
+			console.log(response);
+			if (response.status) {
 				console.log(response);
 				setError(null);
-				const customerUserCounts = response.data.tickets.map((ticket) => ({
+				const ticketUserCounts = response.data.map((ticket) => ({
 					id: ticket.ticket_id,
-					number: ticket.number,
-					subject: ticket.subject,
-					department: ticket.department,
-					equipment: ticket.equipment,
-					user: ticket.user_id,
-					staff: ticket.staff_id,
-					created: ticket.created,
-
-					equipments: ticket.topics?.length || 0,
+					number: ticket.ticket_number,
+					subject: ticket.ticket_subject,
+					status: "Open",
+					department: ticket.dept_id,
+					equipment: ticket.provisioned_equipment.serial_number,
+					user: ticket.user.name,
+					staff: ticket.assigned_staff.name,
+					due_date: ticket.due_date,
+					created: ticket.createdAt,
+					data: ticket,
 				}));
-				setCustomers(customerUserCounts);
+				console.log("Tickets", ticketUserCounts);
+				setTickets(ticketUserCounts);
 				setLoading(false);
 			} else {
-				setError("Failed Fetching Customers");
-				setCustomers([]);
+				setError("Failed Fetching tickets");
+				setTickets([]);
 				setLoading(false);
 			}
 		} catch (error) {
-			setError("Failed Fetching Customers");
+			setError("Failed Fetching tickets");
 			setLoading(false);
-			setCustomers([]);
+			setTickets([]);
 		}
 	};
 
@@ -188,44 +203,105 @@ const Tickets = () => {
 		console.log("Row clicked:", params.row);
 	};
 
-	// if (loading) {
-	// 	return (
-	// 		<Box sx={{ ...flexCol, justifyContent: "center", alignItems: "center", minHeight: "300px", width: "100%" }}>
-	// 			<CircularProgress />
-	// 		</Box>
-	// 	);
-	// }
+	const handleTabChange = (newValue) => {
+		console.log("New Tab Value", newValue);
+		setTabIndex(newValue);
+	};
 
-	// if (error && !loading) {
-	// 	return (
-	// 		<Box sx={{ ...flexCol, justifyContent: "center", alignItems: "center", minHeight: "300px", width: "100%" }}>
-	// 			<Alert severity="error">{error}</Alert>
-	// 		</Box>
-	// 	);
-	// }
+	if (loading) {
+		return <LoadingWrapper minHeight={"300px"} />;
+	}
 
+	if (error && !loading) {
+		return <ErrorAlertWrapper minHeight={"300px"} error={error} />;
+	}
 	return (
 		<>
 			<Box pb={2} px={4} width={"100%"}>
-				{/* <CustomDatagrid
-				data={customers}
-				columns={columns}
-				rowIdField="id"
-				onSelect={handleRowSelect}
-				rowClick={true}
-				onRowClick={handleRowClick}
-				pageSize={10}
-				pageSizeOptions={[5, 10, 25, 50]}
-				checkboxSelection={true}
-				customButtons={customButtons}
-			/> */}
-				<Button
-					variant="contained"
+				<Box
+					sx={{
+						...flexRow,
+						justifyContent: "flex-start",
+						alignItems: "center",
+						flexWrap: "nowrap",
+						columnGap: 2,
+						mt: 1,
+						mb: 1,
+						py: 2,
+					}}>
+					<CounterCard title="My Tickets" count="37" color="primary" />
+					<CounterCard title="Overdue Tickets" count="4" color="error" />
+					<CounterCard title="Open Tickets" count="23" color="success" />
+					<CounterCard title="Closed Tickets" count="10" color="warning" />
+				</Box>
+				{/* <Box
+					sx={{
+						...flexRow,
+						justifyContent: "flex-start",
+						alignItems: "center",
+						columnGap: 1,
+						mt: 1,
+						mb: 1,
+						pb: 1,
+						borderBottom: "1px solid #ddd",
+					}}>
+					<Button
+						size="small"
+						onClick={() => handleTabChange(0)}
+						color="primary"
+						variant={tabIndex === 0 ? "contained" : "text"}>
+						My Tickets
+					</Button>
+					<Button
+						size="small"
+						color="primary"
+						onClick={() => handleTabChange(1)}
+						variant={tabIndex === 1 ? "contained" : "text"}>
+						Open
+					</Button>
+					<Button
+						size="small"
+						color="primary"
+						onClick={() => handleTabChange(2)}
+						variant={tabIndex === 2 ? "contained" : "text"}>
+						Closed
+					</Button>
+					<Button
+						size="small"
+						color="primary"
+						onClick={() => handleTabChange(3)}
+						variant={tabIndex === 3 ? "contained" : "text"}>
+						Unassigned
+					</Button>
+					<Tooltip title="Add New View">
+						<IconButton>
+							<AddIcon />
+						</IconButton>
+					</Tooltip>
+				</Box> */}
+				<CustomDatagrid
+					data={tickets}
+					columns={columns}
+					rowIdField="id"
+					onSelect={handleRowSelect}
+					rowClick={true}
+					onRowClick={handleRowClick}
+					pageSize={10}
+					pageSizeOptions={[5, 10, 25, 50]}
+					checkboxSelection={true}
+					customButtons={customButtons}
+					showToggle={true}
+					showFilters={true}
+				/>
+
+				{/* <KanbanBoardComponent /> */}
+				{/* <Button
+					size="small"variant="contained"
 					onClick={() => {
 						setFormOpen(true);
 					}}>
 					Open Form
-				</Button>
+				</Button> */}
 			</Box>
 			<Drawer anchor={"right"} sx={{ width: "50vw" }} open={formOpen}>
 				<Box width={"50vw"}>

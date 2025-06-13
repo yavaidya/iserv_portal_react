@@ -1,6 +1,6 @@
 // ThemeContext.js
 import React, { createContext, useState, useMemo, useEffect, useContext } from "react";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { alpha, createTheme, ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import { fonts, themeColors } from "../Data/ThemeColors";
 export const ThemeContext = createContext();
@@ -44,17 +44,48 @@ export const ThemeContextProvider = ({ children }) => {
 				typography: {
 					fontFamily,
 					fontSize: 12,
-					h1: { fontSize: "28px", fontWeight: 600, lineHeight: "36px" },
-					h2: { fontSize: "24px", fontWeight: 600, lineHeight: "32px" },
-					h3: { fontSize: "20px", fontWeight: 500, lineHeight: "28px" },
-					h4: { fontSize: "18px", fontWeight: 500, lineHeight: "26px" },
-					h5: { fontSize: "16px", fontWeight: 500, lineHeight: "24px" },
-					h6: { fontSize: "14px", fontWeight: 500, lineHeight: "22px" },
-					body1: { fontSize: "12px", lineHeight: "20px" },
-					body2: { fontSize: "12px", lineHeight: "18px" },
-					caption: { fontSize: "14px", lineHeight: "20px" },
-					subtitle1: { fontSize: "12px", fontWeight: 500, lineHeight: "18px" },
-					subtitle2: { fontSize: "11px", fontWeight: 500, lineHeight: "16px" },
+
+					h1: {
+						fontSize: "28px",
+						fontWeight: 600,
+					},
+					h2: {
+						fontSize: "24px",
+						fontWeight: 600,
+					},
+					h3: {
+						fontSize: "20px",
+						fontWeight: 500,
+					},
+					h4: {
+						fontSize: "18px",
+						fontWeight: 500,
+					},
+					h5: {
+						fontSize: "16px",
+						fontWeight: 500,
+					},
+					h6: {
+						fontSize: "14px",
+						fontWeight: 500,
+					},
+					body1: {
+						fontSize: "12px",
+					},
+					body2: {
+						fontSize: "12px",
+					},
+					caption: {
+						fontSize: "12px",
+					},
+					subtitle1: {
+						fontSize: "12px",
+						fontWeight: 500,
+					},
+					subtitle2: {
+						fontSize: "11px",
+						fontWeight: 500,
+					},
 				},
 				components: {
 					MuiCssBaseline: {
@@ -63,6 +94,190 @@ export const ThemeContextProvider = ({ children }) => {
 							"*": { fontFamily },
 						},
 					},
+					MuiButton: {
+						styleOverrides: {
+							root: {
+								borderRadius: "10px",
+								textTransform: "none",
+								fontWeight: 500,
+								fontSize: "13px",
+								paddingInline: 20,
+							},
+
+							// Override for contained variant (any color)
+							contained: {},
+
+							containedPrimary: {
+								backgroundColor: themeColors[accentColor].main,
+								color: themeColors[accentColor].contrastText,
+								"&:hover": {
+									backgroundColor: themeColors[accentColor].dark,
+								},
+							},
+
+							containedSecondary: {
+								backgroundColor: "#6C757D",
+								color: "#fff",
+								"&:hover": {
+									backgroundColor: "#545b62",
+								},
+							},
+
+							// Override for outlined variant
+							outlined: {
+								borderWidth: 2,
+							},
+
+							outlinedPrimary: {
+								border: "0.5px solid",
+								borderColor: themeColors[accentColor].main,
+								color: themeColors[accentColor].main,
+								"&:hover": {
+									borderColor: themeColors[accentColor].main,
+									backgroundColor: themeColors[accentColor].main,
+									color: themeColors[accentColor].contrastText,
+								},
+							},
+
+							// Override for text variant
+							textPrimary: {
+								color: themeColors[accentColor].main,
+								"&:hover": {
+									backgroundColor: alpha(themeColors[accentColor].light, 0.1),
+								},
+							},
+						},
+					},
+					MuiOutlinedInput: {
+						styleOverrides: {
+							root: {
+								borderRadius: "10px",
+								background: `${mode === "light" ? "#ffffff" : "#424242"} !important`,
+							},
+							input: {
+								background: "transparent !important",
+							},
+						},
+					},
+					MuiInputBase: {
+						styleOverrides: {
+							root: {
+								background: mode === "light" ? "#ffffff" : "#424242",
+							},
+							input: {
+								background: "transparent",
+							},
+						},
+					},
+					MuiPickersOutlinedInput: {
+						styleOverrides: {
+							root: {
+								borderRadius: "10px",
+								background: `${mode === "light" ? "#ffffff" : "#424242"} !important`,
+							},
+							input: {
+								background: "transparent !important",
+							},
+						},
+					},
+					MuiAlert: {
+						styleOverrides: {
+							root: {
+								borderRadius: "10px",
+							},
+						},
+					},
+					// MuiFilledInput: {
+					// 	styleOverrides: {
+					// 		root: {
+					// 			borderRadius: "10px",
+					// 			boxShadow: "0 2px 8px 0 rgba(0,0,0,0.1)",
+					// 			backgroundColor: mode === "light" ? "#ffffff" : "#424242",
+
+					// 			"&:before, &:after": {
+					// 				border: "none",
+					// 			},
+					// 			"&.Mui-focused:after": {
+					// 				border: "2px solid",
+					// 				borderColor: themeColors[accentColor].main,
+					// 			},
+					// 		},
+					// 		input: {
+					// 			borderRadius: "10px",
+
+					// 			background: "transparent",
+					// 		},
+					// 	},
+					// },
+					// MuiInput: {
+					// 	styleOverrides: {
+					// 		root: {
+					// 			borderRadius: "10px",
+					// 			boxShadow: "0 2px 8px 0 rgba(0,0,0,0.1)",
+
+					// 			background: mode === "light" ? "#ffffff" : "#424242",
+					// 			"&:before, &:after": {
+					// 				border: "none",
+					// 			},
+					// 			"&.Mui-focused:after": {
+					// 				border: "2px solid",
+					// 				borderColor: themeColors[accentColor].main,
+					// 			},
+					// 		},
+					// 		input: {
+					// 			borderRadius: "10px",
+
+					// 			background: "transparent",
+					// 		},
+					// 	},
+					// },
+					// MuiSelect: {
+					// 	styleOverrides: {
+					// 		root: {
+					// 			borderRadius: "10px",
+					// 			boxShadow: "0 2px 8px 0 rgba(0,0,0,0.1)",
+
+					// 			background: mode === "light" ? "#ffffff" : "#424242",
+					// 		},
+					// 	},
+					// },
+					// MuiAutocomplete: {
+					// 	styleOverrides: {
+					// 		inputRoot: {
+					// 			borderRadius: "10px !important",
+					// 			boxShadow: "0 2px 8px 0 rgba(0,0,0,0.1)",
+
+					// 			background: mode === "light" ? "#ffffff" : "#424242",
+					// 		},
+					// 		paper: {
+					// 			borderRadius: "10px",
+					// 		},
+					// 	},
+					// },
+					// MuiPickersDay: {
+					// 	styleOverrides: {
+					// 		root: {
+					// 			borderRadius: "10px",
+					// 		},
+					// 	},
+					// },
+					// MuiPickersPopper: {
+					// 	styleOverrides: {
+					// 		paper: {
+					// 			borderRadius: "10px",
+					// 			background: mode === "light" ? "#ffffff" : "#424242",
+					// 			boxShadow: "0 2px 8px 0 rgba(0,0,0,0.1)",
+					// 		},
+					// 	},
+					// },
+					// MuiCalendarPicker: {
+					// 	styleOverrides: {
+					// 		root: {
+					// 			borderRadius: "10px",
+					// 			background: mode === "light" ? "#ffffff" : "#424242",
+					// 		},
+					// 	},
+					// },
 				},
 			}),
 		[mode, accentColor, fontFamily]

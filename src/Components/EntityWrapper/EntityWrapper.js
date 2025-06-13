@@ -103,7 +103,14 @@ const EntityWrapper = ({ ...props }) => {
 				</>
 			)}
 			{props.formProps.formOpen && !useDrawer && (
-				<Box sx={{ minHeight: "600px" }}>
+				<Box
+					sx={{
+						minHeight: "600px",
+						background: (theme) => theme.palette.background.paper,
+						borderRadius: "10px",
+						boxShadow: "0 0 5px 2px rgba(0,0,0,0.1)",
+						p: 3,
+					}}>
 					{props.FormComponent && (
 						<props.FormComponent
 							{...props.formProps}

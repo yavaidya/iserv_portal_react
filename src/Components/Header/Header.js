@@ -46,6 +46,7 @@ const Header = () => {
 					alignItems: "center",
 				}}>
 				<Box sx={{ ...flexRow, justifyContent: "flex-end", alignItems: "center", columnGap: 2 }}>
+					<GlobalSearch width={250} />
 					<Button
 						variant="outlined"
 						startIcon={<NoteAddRoundedIcon />}
@@ -61,9 +62,8 @@ const Header = () => {
 							alignItems: "center",
 							columnGap: 1,
 							}}> */}
-					<GlobalSearch width={400} />
 					<NotificationsButton count={3} onClick={() => console.log("Notifications clicked")} />
-					<SettingsButton onClick={() => console.log("Settings clicked")} />
+					<SettingsButton onClick={() => navigate("/settings")} />
 					<ProfileIcon reverse={true} showMenu={false} sideBarCollapsed={true} iconClick={true} />
 					{/* </Box> */}
 				</Box>

@@ -108,17 +108,16 @@ const HorizontalLayout = () => {
 						}}>
 						<Hero />
 						<Box sx={{ width: "100%", overflowY: "auto" }}>
-							<Box minHeight={"77vh"} pt={2}>
-								<Paper
+							<Box minHeight={"77vh"}>
+								<Box
 									sx={{
-										background: (theme) => theme.palette.background.paper,
-										mx: 3,
-										ml: 4,
+										// background: (theme) => theme.palette.background.paper,
+										// mx: 3,
+										// ml: 4,
 										mb: 3,
-										pt: 2,
-										px: 1,
+										// px: 1,
 										borderRadius: 2,
-										boxShadow: "0 0 20px 0px rgba(0,0,0,0.1)",
+										// boxShadow: "0 0 20px 0px rgba(0,0,0,0.1)",
 										minHeight: "500px",
 									}}>
 									<Routes>
@@ -143,7 +142,7 @@ const HorizontalLayout = () => {
 										<Route path="/users" element={<CustomerUsers />} />
 										<Route path="/*" element={<PageNotFound />} />
 									</Routes>
-								</Paper>
+								</Box>
 							</Box>
 							<Footer />
 						</Box>

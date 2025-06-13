@@ -324,7 +324,7 @@ const DocumentCategoriesForm = ({
 										return;
 									}
 								}}>
-								Upload New Documents
+								Upload Documents
 							</Button>
 							<Typography variant="body1">Or</Typography>
 							<Button
@@ -342,7 +342,7 @@ const DocumentCategoriesForm = ({
 										return;
 									}
 								}}>
-								Select Existing Documents
+								Select Documents
 							</Button>
 						</Box>
 					</Box>
@@ -374,10 +374,10 @@ const DocumentCategoriesForm = ({
 					</Button>
 					<Box display="flex" gap={1}>
 						<Button variant="contained" color="primary" onClick={() => handleSubmit(true)}>
-							Upload & Add New
+							Save & New
 						</Button>
 						<Button variant="contained" color="primary" onClick={() => handleSubmit(false)}>
-							Upload
+							Save
 						</Button>
 					</Box>
 				</Box>

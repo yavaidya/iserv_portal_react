@@ -102,7 +102,7 @@ const ProfileIcon = ({ sideBarCollapsed = false, reverse = false, showMenu = tru
 	function stringAvatar(name) {
 		return {
 			sx: {
-				bgcolor: stringToColor(name),
+				// bgcolor: stringToColor(name),
 				width: 35,
 				height: 35,
 				cursor: iconClick ? "pointer" : "default",
@@ -174,6 +174,7 @@ const ProfileIcon = ({ sideBarCollapsed = false, reverse = false, showMenu = tru
 								mb: iconClick ? 0 : 4,
 								width: "auto",
 								minWidth: "175px",
+								borderRadius: "10px",
 							},
 						},
 					}}

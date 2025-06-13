@@ -14,6 +14,7 @@ import {
 	Tooltip,
 	Button,
 	Typography,
+	Divider,
 } from "@mui/material";
 import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -35,6 +36,9 @@ import CustomDatagrid from "../../Components/CustomDatagrid/CustomDatagrid";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import CustomChip from "../../Components/CustomChip/CustomChip";
+import UserName from "../../Components/UserName/UserName";
+import CounterCard from "../../Components/CounterCard/CounterCard";
 const CustomerDetails = () => {
 	const { cus_id } = useParams();
 	const { setActiveTitle } = usePageTitle();
@@ -312,7 +316,13 @@ const CustomerDetails = () => {
 	};
 
 	const InfoRow = ({ label, value, chip }) => (
-		<Box display="flex" justifyContent="space-between" mb={1}>
+		<Box
+			display="flex"
+			justifyContent="flex-start"
+			alignItems={"flex-start"}
+			flexDirection={"column"}
+			rowGap={1}
+			mb={2}>
 			<Typography fontWeight={"bold"}>{label}</Typography>
 			{chip ? chip : <Typography>{value || "-"}</Typography>}
 		</Box>
@@ -329,7 +339,7 @@ const CustomerDetails = () => {
 	return (
 		<Box p={2} px={4} width={"100%"}>
 			<Box display="flex" flexDirection="row" justifyContent="space-between" alignItems="center" width="100%">
-				<Button variant="text" onClick={handleNavigateBack} startIcon={<ArrowBackIcon />}>
+				<Button variant="outlined" onClick={handleNavigateBack} startIcon={<ArrowBackIcon />}>
 					Back
 				</Button>
 				<Box sx={{ ...flexRow, justifyContent: "flex-end", alignItems: "center", columnGap: 1 }}>
@@ -341,389 +351,427 @@ const CustomerDetails = () => {
 					</Button>
 				</Box>
 			</Box>
-			{/* <Box display="flex" flexDirection="row" justifyContent="flex-start" alignItems="center" width="100%">
-				<Box>
-					<Typography variant="h5" fontWeight={"bold"}>
-						Customer Details:
-					</Typography>
-				</Box>
-			</Box> */}
 			<Box width="100%" mx="auto" my={2}>
-				{/* Top Row: Two Side-by-Side Boxes */}
 				<Box display="flex" flexWrap="wrap" gap={2} mb={2}>
-					{/* Left Box */}
-					<Box
-						flex={1}
-						minWidth={300}
-						border="1px solid #eee"
-						borderRadius={2}
-						boxShadow="0 1px 4px rgba(0,0,0,0.08)"
-						p={2}>
-						<InfoRow label="Customer Name" value={customer?.name} />
-						<InfoRow
-							label="Website"
-							value={
-								<Link href={customer?.website || "#"} underline="hover">
-									{customer?.website || "N/A"}
-								</Link>
-							}
-						/>
-						<InfoRow label="Customer Address" value={customer?.address || "N/A"} />
-						<InfoRow label="Manager" value={customer?.org_manager?.name || "No Manager"} />
-						<InfoRow label="Created On" value={formatDate(customer.createdAt)} />
+					<Box minWidth={"20%"} display={"flex"} flexDirection={"column"} rowGap={2}>
+						<Box
+							flex={1}
+							borderRadius={3}
+							sx={{ background: (theme) => theme.palette.background.paper }}
+							boxShadow="0 1px 6px rgba(0,0,0,0.1)"
+							px={3}
+							py={3}>
+							<Box display="flex" justifyContent="space-between">
+								<Typography fontWeight={"bold"} variant="h5">
+									{customer?.name}
+								</Typography>
+								<CustomChip text={"Active"} />
+							</Box>
+							<Divider flexItem sx={{ mt: "10px", mb: "10px" }} />
+
+							<InfoRow label="Customer Address" value={customer?.address || "N/A"} />
+							<InfoRow
+								label="Manager"
+								value={<UserName name={customer?.org_manager?.name || "No Manager"} />}
+							/>
+							<InfoRow
+								label="Website"
+								value={
+									<Link href={customer?.website || "#"} underline="hover">
+										{customer?.website || "N/A"}
+									</Link>
+								}
+							/>
+
+							{/* <InfoRow
+								label="Customer Sites"
+								value={
+									<Link onClick={() => setTabIndex(4)} sx={{ cursor: "pointer" }} underline="hover">
+										{customer?.org_sites?.length || "NA"} Sites
+									</Link>
+								}
+							/>
+							<InfoRow
+								label="Customer Users"
+								value={
+									<Link onClick={() => setTabIndex(3)} sx={{ cursor: "pointer" }} underline="hover">
+										{customer?.org_users?.length || "NA"} Users
+									</Link>
+								}
+							/>
+							<InfoRow
+								label="Customer Equipments"
+								value={
+									<Link onClick={() => setTabIndex(1)} sx={{ cursor: "pointer" }} underline="hover">
+										{customer?.org_equipments?.length || "NA"} Equipments
+									</Link>
+								}
+							/> */}
+							<InfoRow label="Created On" value={formatDate(customer.createdAt)} />
+							<InfoRow label="Last Updated" value={formatDate(customer?.updatedAt) || "-"} />
+						</Box>
+						<Box
+							borderRadius={3}
+							boxShadow="0 1px 4px rgba(0,0,0,0.08)"
+							px={3}
+							py={2}
+							sx={{ background: (theme) => theme.palette.background.paper }}>
+							<Typography fontWeight={"bold"} variant="h6" gutterBottom>
+								Notes
+							</Typography>
+							<Divider flexItem sx={{ mt: "2px", mb: "10px" }} />
+							<Typography>{customer.notes || "-"}</Typography>
+						</Box>
 					</Box>
 
-					{/* Right Box */}
-					<Box
-						flex={1}
-						minWidth={300}
-						border="1px solid #eee"
-						borderRadius={2}
-						boxShadow="0 1px 4px rgba(0,0,0,0.08)"
-						p={2}>
-						<InfoRow
-							label="Status"
-							chip={
-								<Chip
-									label={customer.status === 1 ? "Active" : "Inactive"}
-									color={customer.status === 1 ? "success" : "default"}
-									size="small"
-								/>
-							}
-						/>
-						<InfoRow
-							label="Provisioned Equipment"
-							value={
-								<Link onClick={() => setTabIndex(1)} sx={{ cursor: "pointer" }} underline="hover">
-									{customer?.org_equipments?.length || "NA"} Equipments
-								</Link>
-							}
-						/>
-						<InfoRow
-							label="Customer Sites"
-							value={
-								<Link onClick={() => setTabIndex(4)} sx={{ cursor: "pointer" }} underline="hover">
-									{customer?.org_sites?.length || "NA"} Sites
-								</Link>
-							}
-						/>
-						<InfoRow
-							label="Customer Users"
-							value={
-								<Link onClick={() => setTabIndex(3)} sx={{ cursor: "pointer" }} underline="hover">
-									{customer?.org_users?.length || "NA"} Users
-								</Link>
-							}
-						/>
-						<InfoRow label="Last Updated" value={formatDate(customer?.updatedAt) || "-"} />
+					<Box flex={1} minWidth={300} borderRadius={3} height={"100%"}>
+						<Box
+							sx={{
+								...flexRow,
+								justifyContent: "flex-start",
+								alignItems: "center",
+								flexWrap: "nowrap",
+								columnGap: 2,
+								mb: 2,
+							}}>
+							<CounterCard
+								title="Tickets"
+								onClick={() => setTabIndex(0)}
+								count={customer?.org_users?.length}
+								color="primary"
+							/>
+							<CounterCard
+								title="Users"
+								onClick={() => setTabIndex(3)}
+								count={customer?.org_users?.length}
+								color="primary"
+							/>
+							<CounterCard
+								title="Sites"
+								onClick={() => setTabIndex(4)}
+								count={customer?.org_sites?.length}
+								color="primary"
+							/>
+							<CounterCard
+								title="Equipments"
+								onClick={() => setTabIndex(1)}
+								count={customer?.org_equipments?.length}
+								color="primary"
+							/>
+						</Box>
+						<Box
+							flex={1}
+							minWidth={300}
+							borderRadius={3}
+							minHeight={"400px"}
+							height={"100%"}
+							boxShadow="0 1px 4px rgba(0,0,0,0.08)"
+							px={3}
+							py={1}
+							sx={{ background: (theme) => theme.palette.background.paper }}>
+							<Tabs
+								sx={{ borderBottom: "1px solid #eee" }}
+								value={tabIndex}
+								onChange={handleTabChange}
+								aria-label="Profile Tabs"
+								textColor="primary"
+								indicatorColor="primary">
+								<Tab label="Tickets" />
+								<Tab label="Provisions" />
+								<Tab label="Documents" />
+								<Tab label="Users" />
+								<Tab label="Sites" />
+							</Tabs>
+
+							<TabPanel value={tabIndex} index={2}>
+								<Box
+									sx={{
+										...flexCol,
+										justifyContent: "flex-start",
+										alignItems: "flex-start",
+										width: "100%",
+										rowGap: 2,
+									}}>
+									<Box
+										display="flex"
+										flexDirection="row"
+										justifyContent="flex-start"
+										alignItems="center"
+										width="100%">
+										<Box>
+											<Typography variant="h5" fontWeight={"bold"}>
+												Customer Equipment Documents
+											</Typography>
+											<Typography variant="body1" m={0}>
+												List of all the documents assigned to this equipment or its parents
+											</Typography>
+										</Box>
+									</Box>
+									<Box
+										display="flex"
+										flexDirection="column"
+										justifyContent="flex-start"
+										alignItems="flex-start"
+										width="100%">
+										{equipmentDocs && equipmentDocs.length > 0 ? (
+											equipmentDocs.map((category, index) => {
+												const panelId = `equipment-${index}`;
+												return (
+													<Accordion
+														key={panelId}
+														sx={{ width: "100%" }}
+														elevation={3}
+														expanded={true}
+														onChange={handleAccordianChange(panelId)}>
+														<AccordionSummary
+															sx={{ borderBottom: "1px solid #eee" }}
+															expandIcon={<ExpandMoreIcon />}
+															aria-controls={`${panelId}-content`}
+															id={`${panelId}-header`}>
+															<Typography variant="h6" fontWeight="bold" margin={0}>
+																{category.category_name}
+															</Typography>
+														</AccordionSummary>
+														<AccordionDetails sx={{ p: 2 }}>
+															{category.docs.map((doc) => (
+																<>
+																	<Box>
+																		<DocumentCard
+																			data={doc}
+																			showCategory={false}
+																			showDelete={false}
+																			key={`${doc.title}_${doc.id}`}
+																		/>
+																	</Box>
+																</>
+															))}
+														</AccordionDetails>
+													</Accordion>
+												);
+											})
+										) : (
+											<Alert severity="info" sx={{ width: "100%", mt: 1 }}>
+												No Assigned Documents
+											</Alert>
+										)}
+									</Box>
+
+									{parentEquipmentDocs && parentEquipmentDocs.length > 0 && (
+										<Box
+											display="flex"
+											flexDirection="column"
+											justifyContent="flex-start"
+											alignItems="flex-start"
+											width="100%">
+											<Box mb={2}>
+												<Typography variant="h5" fontWeight={"bold"}>
+													Parent Equipment Documents
+												</Typography>
+												<Typography variant="body1" m={0}>
+													List of all the documents inherited from the parent equipment
+												</Typography>
+											</Box>
+											{parentEquipmentDocs.map((category, index) => {
+												const panelId = `parent-${index}`;
+												return (
+													<Accordion
+														key={panelId}
+														sx={{ width: "100%" }}
+														expanded={expanded === panelId}
+														onChange={handleAccordianChange(panelId)}>
+														<AccordionSummary
+															expandIcon={<ExpandMoreIcon />}
+															aria-controls={`${panelId}-content`}
+															id={`${panelId}-header`}>
+															<Typography variant="body1" fontWeight="bold">
+																{category.category_name}
+															</Typography>
+														</AccordionSummary>
+														<AccordionDetails>
+															{category.docs.map((doc) => (
+																<>
+																	<Box>
+																		<DocumentCard
+																			data={doc}
+																			showCategory={false}
+																			showDelete={false}
+																			key={`${doc.title}_${doc.id}`}
+																		/>
+																	</Box>
+																</>
+															))}
+														</AccordionDetails>
+													</Accordion>
+												);
+											})}
+										</Box>
+									)}
+								</Box>
+							</TabPanel>
+
+							<TabPanel value={tabIndex} index={0}>
+								<Box
+									sx={{
+										...flexCol,
+										justifyContent: "flex-start",
+										alignItems: "flex-start",
+										width: "100%",
+										rowGap: 2,
+									}}>
+									<Box
+										display="flex"
+										flexDirection="row"
+										justifyContent="flex-start"
+										alignItems="center"
+										width="100%">
+										<Box>
+											<Typography variant="h5" fontWeight={"bold"}>
+												Customer Tickets
+											</Typography>
+											<Typography variant="body1" m={0}>
+												List of all the Tickets for this Customer
+											</Typography>
+										</Box>
+									</Box>
+									<Alert severity="info" sx={{ width: "100%", mt: 1 }}>
+										No Tickets for this Customer
+									</Alert>
+								</Box>
+							</TabPanel>
+							<TabPanel value={tabIndex} index={1}>
+								<Box
+									sx={{
+										...flexCol,
+										justifyContent: "flex-start",
+										alignItems: "flex-start",
+										width: "100%",
+										rowGap: 2,
+									}}>
+									<Box
+										display="flex"
+										flexDirection="row"
+										justifyContent="flex-start"
+										alignItems="center"
+										width="100%">
+										<Box>
+											<Typography variant="h5" fontWeight={"bold"}>
+												Equipment Provisions
+											</Typography>
+											<Typography variant="body1" m={0}>
+												List of all the Equipments Provisioned to the Customer
+											</Typography>
+										</Box>
+									</Box>
+
+									{orgProvisions.length > 0 ? (
+										<CustomDatagrid
+											data={orgProvisions}
+											columns={org_provisions_column}
+											rowIdField={"id"}
+											rowClick={true}
+											pageSize={10}
+											pageSizeOptions={[5, 10, 25, 50]}
+											checkboxSelection={true}
+											sortBy={[{ field: "created", sort: "desc" }]}
+										/>
+									) : (
+										<Alert severity="info" sx={{ width: "100%", mt: 1 }}>
+											No Provisions for this Customer
+										</Alert>
+									)}
+								</Box>
+							</TabPanel>
+							<TabPanel value={tabIndex} index={3}>
+								<Box
+									sx={{
+										...flexCol,
+										justifyContent: "flex-start",
+										alignItems: "flex-start",
+										width: "100%",
+										rowGap: 2,
+									}}>
+									<Box
+										display="flex"
+										flexDirection="row"
+										justifyContent="flex-start"
+										alignItems="center"
+										width="100%">
+										<Box>
+											<Typography variant="h5" fontWeight={"bold"}>
+												Customer Users
+											</Typography>
+											<Typography variant="body1" m={0}>
+												List of all the Users of the Customer
+											</Typography>
+										</Box>
+									</Box>
+									{orgUsers.length > 0 ? (
+										<CustomDatagrid
+											data={orgUsers}
+											columns={org_users_column}
+											rowIdField={"id"}
+											rowClick={true}
+											pageSize={10}
+											pageSizeOptions={[5, 10, 25, 50]}
+											checkboxSelection={true}
+											sortBy={[{ field: "created", sort: "desc" }]}
+										/>
+									) : (
+										<Alert severity="info" sx={{ width: "100%", mt: 1 }}>
+											No Users Available for the Customer
+										</Alert>
+									)}
+								</Box>
+							</TabPanel>
+							<TabPanel value={tabIndex} index={4}>
+								<Box
+									sx={{
+										...flexCol,
+										justifyContent: "flex-start",
+										alignItems: "flex-start",
+										width: "100%",
+										rowGap: 2,
+									}}>
+									<Box
+										display="flex"
+										flexDirection="row"
+										justifyContent="flex-start"
+										alignItems="center"
+										width="100%">
+										<Box>
+											<Typography variant="h5" fontWeight={"bold"}>
+												Customer Sites
+											</Typography>
+											<Typography variant="body1" m={0}>
+												List of all the Sites of the Customer
+											</Typography>
+										</Box>
+									</Box>
+
+									{orgSites.length > 0 ? (
+										<CustomDatagrid
+											data={orgSites}
+											columns={org_sites_column}
+											rowIdField={"id"}
+											rowClick={true}
+											pageSize={10}
+											pageSizeOptions={[5, 10, 25, 50]}
+											checkboxSelection={true}
+											sortBy={[{ field: "created", sort: "desc" }]}
+										/>
+									) : (
+										<Alert severity="info" sx={{ width: "100%", mt: 1 }}>
+											No Sites Available for the Customer
+										</Alert>
+									)}
+								</Box>
+							</TabPanel>
+						</Box>
 					</Box>
 				</Box>
 
 				{/* Notes Box */}
-				<Box border="1px solid #eee" borderRadius={2} boxShadow="0 1px 4px rgba(0,0,0,0.08)" p={2}>
-					<Typography fontWeight={"bold"} gutterBottom>
-						Notes
-					</Typography>
-					<Typography>{customer.notes || "-"}</Typography>
-				</Box>
 			</Box>
-			<Tabs
-				sx={{ borderBottom: "1px solid #eee" }}
-				value={tabIndex}
-				onChange={handleTabChange}
-				aria-label="Profile Tabs"
-				textColor="primary"
-				indicatorColor="primary">
-				<Tab label="Tickets" />
-				<Tab label="Provisions" />
-				<Tab label="Documents" />
-				<Tab label="Users" />
-				<Tab label="Sites" />
-			</Tabs>
-
-			<TabPanel value={tabIndex} index={2}>
-				<Box
-					sx={{
-						...flexCol,
-						justifyContent: "flex-start",
-						alignItems: "flex-start",
-						width: "100%",
-						rowGap: 2,
-					}}>
-					<Box
-						display="flex"
-						flexDirection="row"
-						justifyContent="flex-start"
-						alignItems="center"
-						width="100%">
-						<Box>
-							<Typography variant="h5" fontWeight={"bold"}>
-								Customer Equipment Documents
-							</Typography>
-							<Typography variant="body1" m={0}>
-								List of all the documents assigned to this equipment or its parents
-							</Typography>
-						</Box>
-					</Box>
-					<Box
-						display="flex"
-						flexDirection="column"
-						justifyContent="flex-start"
-						alignItems="flex-start"
-						width="100%">
-						{equipmentDocs && equipmentDocs.length > 0 ? (
-							equipmentDocs.map((category, index) => {
-								const panelId = `equipment-${index}`;
-								return (
-									<Accordion
-										key={panelId}
-										sx={{ width: "100%" }}
-										elevation={3}
-										expanded={true}
-										onChange={handleAccordianChange(panelId)}>
-										<AccordionSummary
-											sx={{ borderBottom: "1px solid #eee" }}
-											expandIcon={<ExpandMoreIcon />}
-											aria-controls={`${panelId}-content`}
-											id={`${panelId}-header`}>
-											<Typography variant="h6" fontWeight="bold" margin={0}>
-												{category.category_name}
-											</Typography>
-										</AccordionSummary>
-										<AccordionDetails sx={{ p: 2 }}>
-											{category.docs.map((doc) => (
-												<>
-													<Box>
-														<DocumentCard
-															data={doc}
-															showCategory={false}
-															showDelete={false}
-															key={`${doc.title}_${doc.id}`}
-														/>
-													</Box>
-												</>
-											))}
-										</AccordionDetails>
-									</Accordion>
-								);
-							})
-						) : (
-							<Alert severity="info" sx={{ width: "100%", mt: 1 }}>
-								No Assigned Documents
-							</Alert>
-						)}
-					</Box>
-
-					{parentEquipmentDocs && parentEquipmentDocs.length > 0 && (
-						<Box
-							display="flex"
-							flexDirection="column"
-							justifyContent="flex-start"
-							alignItems="flex-start"
-							width="100%">
-							<Box mb={2}>
-								<Typography variant="h5" fontWeight={"bold"}>
-									Parent Equipment Documents
-								</Typography>
-								<Typography variant="body1" m={0}>
-									List of all the documents inherited from the parent equipment
-								</Typography>
-							</Box>
-							{parentEquipmentDocs.map((category, index) => {
-								const panelId = `parent-${index}`;
-								return (
-									<Accordion
-										key={panelId}
-										sx={{ width: "100%" }}
-										expanded={expanded === panelId}
-										onChange={handleAccordianChange(panelId)}>
-										<AccordionSummary
-											expandIcon={<ExpandMoreIcon />}
-											aria-controls={`${panelId}-content`}
-											id={`${panelId}-header`}>
-											<Typography variant="body1" fontWeight="bold">
-												{category.category_name}
-											</Typography>
-										</AccordionSummary>
-										<AccordionDetails>
-											{category.docs.map((doc) => (
-												<>
-													<Box>
-														<DocumentCard
-															data={doc}
-															showCategory={false}
-															showDelete={false}
-															key={`${doc.title}_${doc.id}`}
-														/>
-													</Box>
-												</>
-											))}
-										</AccordionDetails>
-									</Accordion>
-								);
-							})}
-						</Box>
-					)}
-				</Box>
-			</TabPanel>
-
-			<TabPanel value={tabIndex} index={0}>
-				<Box
-					sx={{
-						...flexCol,
-						justifyContent: "flex-start",
-						alignItems: "flex-start",
-						width: "100%",
-						rowGap: 2,
-					}}>
-					<Box
-						display="flex"
-						flexDirection="row"
-						justifyContent="flex-start"
-						alignItems="center"
-						width="100%">
-						<Box>
-							<Typography variant="h5" fontWeight={"bold"}>
-								Customer Tickets
-							</Typography>
-							<Typography variant="body1" m={0}>
-								List of all the Tickets for this Customer
-							</Typography>
-						</Box>
-					</Box>
-					<Alert severity="info" sx={{ width: "100%", mt: 1 }}>
-						No Tickets for this Customer
-					</Alert>
-				</Box>
-			</TabPanel>
-			<TabPanel value={tabIndex} index={1}>
-				<Box
-					sx={{
-						...flexCol,
-						justifyContent: "flex-start",
-						alignItems: "flex-start",
-						width: "100%",
-						rowGap: 2,
-					}}>
-					<Box
-						display="flex"
-						flexDirection="row"
-						justifyContent="flex-start"
-						alignItems="center"
-						width="100%">
-						<Box>
-							<Typography variant="h5" fontWeight={"bold"}>
-								Equipment Provisions
-							</Typography>
-							<Typography variant="body1" m={0}>
-								List of all the Equipments Provisioned to the Customer
-							</Typography>
-						</Box>
-					</Box>
-
-					{orgProvisions.length > 0 ? (
-						<CustomDatagrid
-							data={orgProvisions}
-							columns={org_provisions_column}
-							rowIdField={"id"}
-							rowClick={true}
-							pageSize={10}
-							pageSizeOptions={[5, 10, 25, 50]}
-							checkboxSelection={true}
-							sortBy={[{ field: "created", sort: "desc" }]}
-						/>
-					) : (
-						<Alert severity="info" sx={{ width: "100%", mt: 1 }}>
-							No Provisions for this Customer
-						</Alert>
-					)}
-				</Box>
-			</TabPanel>
-			<TabPanel value={tabIndex} index={3}>
-				<Box
-					sx={{
-						...flexCol,
-						justifyContent: "flex-start",
-						alignItems: "flex-start",
-						width: "100%",
-						rowGap: 2,
-					}}>
-					<Box
-						display="flex"
-						flexDirection="row"
-						justifyContent="flex-start"
-						alignItems="center"
-						width="100%">
-						<Box>
-							<Typography variant="h5" fontWeight={"bold"}>
-								Customer Users
-							</Typography>
-							<Typography variant="body1" m={0}>
-								List of all the Users of the Customer
-							</Typography>
-						</Box>
-					</Box>
-					{orgUsers.length > 0 ? (
-						<CustomDatagrid
-							data={orgUsers}
-							columns={org_users_column}
-							rowIdField={"id"}
-							rowClick={true}
-							pageSize={10}
-							pageSizeOptions={[5, 10, 25, 50]}
-							checkboxSelection={true}
-							sortBy={[{ field: "created", sort: "desc" }]}
-						/>
-					) : (
-						<Alert severity="info" sx={{ width: "100%", mt: 1 }}>
-							No Users Available for the Customer
-						</Alert>
-					)}
-				</Box>
-			</TabPanel>
-			<TabPanel value={tabIndex} index={4}>
-				<Box
-					sx={{
-						...flexCol,
-						justifyContent: "flex-start",
-						alignItems: "flex-start",
-						width: "100%",
-						rowGap: 2,
-					}}>
-					<Box
-						display="flex"
-						flexDirection="row"
-						justifyContent="flex-start"
-						alignItems="center"
-						width="100%">
-						<Box>
-							<Typography variant="h5" fontWeight={"bold"}>
-								Customer Sites
-							</Typography>
-							<Typography variant="body1" m={0}>
-								List of all the Sites of the Customer
-							</Typography>
-						</Box>
-					</Box>
-
-					{orgSites.length > 0 ? (
-						<CustomDatagrid
-							data={orgSites}
-							columns={org_sites_column}
-							rowIdField={"id"}
-							rowClick={true}
-							pageSize={10}
-							pageSizeOptions={[5, 10, 25, 50]}
-							checkboxSelection={true}
-							sortBy={[{ field: "created", sort: "desc" }]}
-						/>
-					) : (
-						<Alert severity="info" sx={{ width: "100%", mt: 1 }}>
-							No Sites Available for the Customer
-						</Alert>
-					)}
-				</Box>
-			</TabPanel>
 		</Box>
 	);
 };

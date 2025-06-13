@@ -791,7 +791,7 @@ const EquipmentForm = ({
 											variant="outlined"
 											component="label"
 											startIcon={<CloudUploadIcon />}
-											sx={{ width: "150px" }}>
+											sx={{ width: "300px" }}>
 											Upload Image
 											<input
 												type="file"
@@ -1106,20 +1106,22 @@ const EquipmentForm = ({
 				)}
 			</Drawer>
 
-			<Drawer anchor={"right"} sx={{ width: "45vw" }} open={provisionFormOpen}>
-				<ProvisionForm
-					formOpen={provisionFormOpen}
-					setFormOpen={setProvisionFormOpen}
-					setParentData={setFormData}
-					showCustomer={true}
-					showEquipment={false}
-					createProvision={false}
-					showStaticCustomer={false}
-					showStaticEquipment={true}
-					customerName={formData?.customer_name || ""}
-					equipmentName={formData?.equipmentName || ""}
-					customerSites={formData?.sites || ""}
-				/>
+			<Drawer anchor={"right"} sx={{ width: "50vw" }} open={provisionFormOpen}>
+				<Box width={"50vw"}>
+					<ProvisionForm
+						formOpen={provisionFormOpen}
+						setFormOpen={setProvisionFormOpen}
+						setParentData={setFormData}
+						showCustomer={true}
+						showEquipment={false}
+						createProvision={false}
+						showStaticCustomer={false}
+						showStaticEquipment={true}
+						customerName={formData?.customer_name || ""}
+						equipmentName={formData?.equipmentName || ""}
+						customerSites={formData?.sites || ""}
+					/>
+				</Box>
 			</Drawer>
 		</>
 	);

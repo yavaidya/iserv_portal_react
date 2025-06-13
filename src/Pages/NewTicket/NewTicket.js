@@ -365,7 +365,17 @@ const NewTicket = () => {
 
 	return (
 		<LocalizationProvider dateAdapter={AdapterMoment}>
-			<Box p={2} px={4} width={"100%"} height={"100%"}>
+			<Box
+				p={4}
+				mx={3}
+				my={1}
+				width={"97%"}
+				height={"100%"}
+				sx={{
+					background: (theme) => theme.palette.background.paper,
+					borderRadius: "10px",
+					boxShadow: "0 0 5px 2px rgba(0,0,0,0.1)",
+				}}>
 				{alert && (
 					<Alert severity="error" sx={{ mb: 2 }}>
 						{alert}

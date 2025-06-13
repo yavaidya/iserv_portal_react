@@ -802,18 +802,20 @@ const CustomerForm = ({
 				/>
 			</Drawer>
 
-			<Drawer anchor={"right"} sx={{ width: "45vw" }} open={provisionFormOpen}>
-				<ProvisionForm
-					formOpen={provisionFormOpen}
-					setFormOpen={setProvisionFormOpen}
-					setParentData={setFormData}
-					showCustomer={false}
-					showEquipment={true}
-					createProvision={false}
-					showStaticCustomer={true}
-					customerName={formData?.customer_name || ""}
-					customerSites={formData?.sites || ""}
-				/>
+			<Drawer anchor={"right"} sx={{ width: "50vw" }} open={provisionFormOpen}>
+				<Box width={"50vw"}>
+					<ProvisionForm
+						formOpen={provisionFormOpen}
+						setFormOpen={setProvisionFormOpen}
+						setParentData={setFormData}
+						showCustomer={false}
+						showEquipment={true}
+						createProvision={false}
+						showStaticCustomer={true}
+						customerName={formData?.customer_name || ""}
+						customerSites={formData?.sites || ""}
+					/>
+				</Box>
 			</Drawer>
 		</>
 	);

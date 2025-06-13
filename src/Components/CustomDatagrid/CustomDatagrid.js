@@ -11,6 +11,8 @@ import {
 	MenuItem,
 	ListItemIcon,
 	ListItemText,
+	Divider,
+	Box,
 } from "@mui/material";
 import { InputAdornment } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
@@ -23,6 +25,12 @@ import BackupTableIcon from "@mui/icons-material/BackupTable";
 import DeleteIcon from "@mui/icons-material/Delete";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
 import Swal from "sweetalert2";
+import TableRowsRoundedIcon from "@mui/icons-material/TableRowsRounded";
+import GridViewRoundedIcon from "@mui/icons-material/GridViewRounded";
+import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
+import SwapVertRoundedIcon from "@mui/icons-material/SwapVertRounded";
+import { useCustomTheme } from "../../Context/ThemeContext";
+import AddIcon from "@mui/icons-material/Add";
 const options = [
 	{ text: "Delete", icon: <DeleteIcon /> },
 	{ text: "Export", icon: <FileUploadIcon /> },
@@ -52,6 +60,9 @@ const CustomDatagrid = ({
 	handleDuplicate = null,
 	handleDelete = null,
 	listLoading = false,
+	showToggle = false,
+	showFilters = false,
+	selectedView = "table",
 }) => {
 	const [searchText, setSearchText] = useState("");
 	const [filteredData, setFilteredData] = useState(data);
@@ -61,7 +72,7 @@ const CustomDatagrid = ({
 			ids: new Set(),
 		}
 	);
-
+	const { flexRow } = useCustomTheme();
 	const [open, setOpen] = useState(false);
 	const anchorRef = useRef(null);
 	const [selectedIndex, setSelectedIndex] = useState(0);
@@ -234,24 +245,64 @@ const CustomDatagrid = ({
 						alignItems: "center",
 						marginBottom: "5px",
 					}}>
-					<TextField
-						variant="outlined"
-						size="small"
-						value={searchText}
-						onChange={handleSearchChange}
-						placeholder="Search..."
-						style={{ marginRight: "20px", minWidth: "20%" }}
-						InputProps={{
-							endAdornment: (
-								<InputAdornment position="end">
-									<SearchIcon />
-								</InputAdornment>
-							),
-						}}
-					/>
+					<Box sx={{ ...flexRow, justifyContent: "flex-start", alignItems: "center" }}>
+						<TextField
+							variant="outlined"
+							size="small"
+							value={searchText}
+							onChange={handleSearchChange}
+							placeholder="Search..."
+							style={{ marginRight: "10px", minWidth: "250px" }}
+							InputProps={{
+								startAdornment: (
+									<InputAdornment position="start">
+										<SearchIcon />
+									</InputAdornment>
+								),
+							}}
+						/>
+						{showFilters && (
+							<>
+								<Tooltip title="Add Filters">
+									<IconButton>
+										<FilterListRoundedIcon />
+									</IconButton>
+								</Tooltip>
+
+								<Tooltip title="Sort By">
+									<IconButton>
+										<SwapVertRoundedIcon />
+									</IconButton>
+								</Tooltip>
+								<Tooltip title="Add New View">
+									<IconButton>
+										<AddIcon />
+									</IconButton>
+								</Tooltip>
+							</>
+						)}
+					</Box>
 
 					{/* Custom Buttons */}
 					<Toolbar style={{ display: "flex", gap: "8px", margin: 0, padding: 0, minHeight: "45px" }}>
+						{showToggle && (
+							<>
+								<Box sx={{ ...flexRow, justifyContent: "flex-end", alignItems: "center" }}>
+									<Tooltip title="Table View">
+										<IconButton color={selectedView === "table" ? "primary" : "text.secondary"}>
+											<TableRowsRoundedIcon />
+										</IconButton>
+									</Tooltip>
+
+									<Divider flexItem orientation="vertical" variant="middle" />
+									<Tooltip title="Board View">
+										<IconButton color={selectedView === "board" ? "primary" : "text.secondary"}>
+											<GridViewRoundedIcon />
+										</IconButton>
+									</Tooltip>
+								</Box>
+							</>
+						)}
 						{customButtons &&
 							customButtons.map((button, index) => (
 								<Button
@@ -274,7 +325,11 @@ const CustomDatagrid = ({
 
 						{showMore && (
 							<>
-								<ButtonGroup variant="contained" ref={anchorRef} aria-label="More actions">
+								<ButtonGroup
+									variant="contained"
+									ref={anchorRef}
+									aria-label="More actions"
+									sx={{ borderRadius: "20px" }}>
 									<Button onClick={handleToggle} sx={{ minWidth: "100px" }}>
 										More
 									</Button>
@@ -284,6 +339,7 @@ const CustomDatagrid = ({
 										aria-expanded={open ? "true" : undefined}
 										aria-label="select action"
 										aria-haspopup="menu"
+										sx={{ px: "2px" }}
 										onClick={handleToggle}>
 										<ArrowDropDownIcon />
 									</Button>
@@ -350,6 +406,7 @@ const CustomDatagrid = ({
 					checkboxSelection={checkboxSelection} // Enable/Disable checkbox based on prop
 					getRowId={(row) => row?.[rowIdField] ?? row?.id}
 					sx={{
+						borderRadius: "10px",
 						backgroundColor: (theme) => theme.palette.background.paper,
 						"& .MuiDataGrid-main": {
 							backgroundColor: (theme) => theme.palette.background.paper,
