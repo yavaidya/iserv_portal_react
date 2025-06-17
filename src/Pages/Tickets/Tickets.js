@@ -16,15 +16,18 @@ import CounterCard from "../../Components/CounterCard/CounterCard";
 import LoadingWrapper from "../../Components/LoadingWrapper/LoadingWrapper";
 import ErrorAlertWrapper from "../../Components/ErrorAlertWrapper/ErrorAlertWrapper";
 import KanbanBoardComponent from "../../Components/KanbanBoard/KanbanBoard";
+import CreateCustomView from "../../Components/CreateCustomView/CreateCustomView";
 
 const Tickets = () => {
 	const { setActiveTitle } = usePageTitle();
 	const { flexCol, flexRow } = useCustomTheme();
 	const [tickets, setTickets] = useState([]);
+	const [allTickets, setAllTickets] = useState([]);
 	const [tabIndex, setTabIndex] = useState(0);
 	const [error, setError] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [formOpen, setFormOpen] = useState(false);
+	const [viewModalOpen, setViewModalOpen] = useState(false);
 	const columns = [
 		{
 			field: "number",
@@ -167,15 +170,16 @@ const Tickets = () => {
 			if (response.status) {
 				console.log(response);
 				setError(null);
+				setAllTickets(response.data);
 				const ticketUserCounts = response.data.map((ticket) => ({
 					id: ticket.ticket_id,
 					number: ticket.ticket_number,
 					subject: ticket.ticket_subject,
 					status: "Open",
 					department: ticket.dept_id,
-					equipment: ticket.provisioned_equipment.serial_number,
-					user: ticket.user.name,
-					staff: ticket.assigned_staff.name,
+					equipment: ticket.ticket_equipment.serial_number,
+					user: ticket.ticket_user.name,
+					staff: ticket.ticket_assignee.name,
 					due_date: ticket.due_date,
 					created: ticket.createdAt,
 					data: ticket,
@@ -189,7 +193,7 @@ const Tickets = () => {
 				setLoading(false);
 			}
 		} catch (error) {
-			setError("Failed Fetching tickets");
+			setError("Failed Fetching tickets catch");
 			setLoading(false);
 			setTickets([]);
 		}
@@ -294,20 +298,25 @@ const Tickets = () => {
 					showFilters={true}
 				/>
 
-				{/* <KanbanBoardComponent /> */}
-				{/* <Button
-					size="small"variant="contained"
-					onClick={() => {
-						setFormOpen(true);
-					}}>
-					Open Form
-				</Button> */}
+				<Button size="small" startIcon={<AddIcon />} variant="outlined" onClick={() => setViewModalOpen(true)}>
+					Create Custom View
+				</Button>
 			</Box>
 			<Drawer anchor={"right"} sx={{ width: "50vw" }} open={formOpen}>
 				<Box width={"50vw"}>
 					<NewTicketFormV2 formOpen={formOpen} setFormOpen={setFormOpen} />
 				</Box>
 			</Drawer>
+
+			<CreateCustomView
+				open={viewModalOpen}
+				onClose={() => setViewModalOpen(false)}
+				data={allTickets}
+				onSave={(viewConfig) => {
+					console.log("Saved View Config:", viewConfig);
+					// 🔁 optionally call API to save it to DB here
+				}}
+			/>
 		</>
 	);
 };

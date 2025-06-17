@@ -15,7 +15,7 @@ const Header = () => {
 				...flexRow,
 				width: "100%",
 				zIndex: 1052,
-				height: "75px",
+				height: "65px",
 				px: 2,
 				background: (theme) => theme.palette.background.paper,
 				boxShadow: "2px 4px 5px 0px rgba(0,0,0,0.1)",
@@ -26,7 +26,7 @@ const Header = () => {
 				sx={{
 					...flexRow,
 					width: "50%",
-					minHeight: "65px",
+					minHeight: "50px",
 					height: "fit-content",
 					justifyContent: "flex-start",
 					alignItems: "center",
@@ -40,7 +40,7 @@ const Header = () => {
 				sx={{
 					...flexRow,
 					width: "100%",
-					minHeight: "65px",
+					minHeight: "50px",
 					height: "fit-content",
 					justifyContent: "flex-end",
 					alignItems: "center",

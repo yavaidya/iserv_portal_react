@@ -33,8 +33,8 @@ export const ThemeContextProvider = ({ children }) => {
 					mode,
 					primary: themeColors[accentColor],
 					background: {
-						default: mode === "light" ? "#f9fafc" : "#303030",
-						paper: mode === "light" ? "#ffffff" : "#424242",
+						default: mode === "light" ? "#f9fafc" : "#424242",
+						paper: mode === "light" ? "#ffffff" : "#303030",
 					},
 					text: {
 						primary: mode === "light" ? "#000000" : "#ffffff",

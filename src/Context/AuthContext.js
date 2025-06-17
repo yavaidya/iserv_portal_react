@@ -9,6 +9,7 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
 	const [user, setUser] = useState(null);
 	const [userMode, setUserMode] = useState(null);
+	const [userToken, setUserToken] = useState(null);
 	const [userAdditionalData, setUserAdditionalData] = useState(null);
 	const [isAuthenticated, setIsAuthenticated] = useState(false);
 	const [loading, setLoading] = useState(true);
@@ -19,6 +20,10 @@ export const AuthProvider = ({ children }) => {
 		const userRoleMode = localStorage.getItem("userMode");
 		if (userRoleMode) {
 			setUserMode(userRoleMode);
+		}
+		const userSavedToken = localStorage.getItem("token");
+		if (userSavedToken) {
+			setUserToken(userSavedToken);
 		}
 		const storedUser = localStorage.getItem("authUser");
 		if (storedUser) {
@@ -40,6 +45,14 @@ export const AuthProvider = ({ children }) => {
 			localStorage.removeItem("authUser");
 		}
 	}, [user]);
+
+	useEffect(() => {
+		if (user) {
+			localStorage.setItem("token", userToken);
+		} else {
+			localStorage.removeItem("token");
+		}
+	}, [userToken]);
 
 	useEffect(() => {
 		if (userMode) {
@@ -70,6 +83,8 @@ export const AuthProvider = ({ children }) => {
 						setUserAdditionalData(null);
 					}
 					setUser(response.data);
+					setUserToken(response.token);
+					localStorage.setItem("token", response.token);
 					setUserMode(response.mode);
 					setTimeout(() => {
 						setLoading(false);
@@ -100,6 +115,7 @@ export const AuthProvider = ({ children }) => {
 	const logout = () => {
 		setUser(null);
 		setUserMode(null);
+		setUserToken(null);
 		setUserAdditionalData(null);
 	};
 
