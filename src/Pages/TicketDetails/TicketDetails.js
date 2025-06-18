@@ -3,12 +3,20 @@ import {
 	AccordionDetails,
 	AccordionSummary,
 	Alert,
+	Autocomplete,
 	Box,
 	Button,
+	Chip,
 	Divider,
+	Drawer,
+	FormControl,
+	IconButton,
 	Link,
+	MenuItem,
+	Select,
 	Tab,
 	Tabs,
+	TextField,
 	Tooltip,
 	Typography,
 } from "@mui/material";
@@ -54,6 +62,22 @@ import ChatBubbleIcon from "@mui/icons-material/ChatBubble";
 import QuestionAnswerIcon from "@mui/icons-material/QuestionAnswer";
 import SpeakerNotesIcon from "@mui/icons-material/SpeakerNotes";
 import ArchiveIcon from "@mui/icons-material/Archive";
+import TicketDepartmentTransferForm from "../../Components/TicketDepartmentTransferForm/TicketDepartmentTransferForm";
+// import InfoRow from "../../Components/InfoRow/InfoRow";
+import EditIcon from "@mui/icons-material/Edit";
+import EditOffIcon from "@mui/icons-material/EditOff";
+import AddCircleIcon from "@mui/icons-material/AddCircle";
+import ConstructionIcon from "@mui/icons-material/Construction";
+import InventoryIcon from "@mui/icons-material/Inventory";
+import PaidIcon from "@mui/icons-material/Paid";
+
+import CheckIcon from "@mui/icons-material/Check";
+import EditableAutocomplete from "../../Components/EditableAutocomplete/EditorAutocomplete";
+import { fetchAgentsService } from "../../Services/agentService";
+import { getCustomerUserByOrgIdService } from "../../Services/customerService";
+import CustomDatagrid from "../../Components/CustomDatagrid/CustomDatagrid";
+import TicketLineItems from "../../Components/TicketLineItems/TicketLineItems";
+import TicketItemsForm from "../../Components/TicketItemsForm/TicketItemsForm";
 
 const TicketDetails = () => {
 	const { ticket_id } = useParams();
@@ -65,8 +89,14 @@ const TicketDetails = () => {
 	const [ticketThreads, setTicketThreads] = useState(null);
 	const [equipmentDocs, setEquipmentDocs] = useState(null);
 	const [parentEquipmentDocs, setParentEquipmentDocs] = useState(null);
+	const [deptFormOpen, setDeptFormOpen] = useState(false);
+	const [editAccountable, setEditAccountable] = useState(false);
 	const [tabIndex, setTabIndex] = useState(0);
 	const [expanded, setExpanded] = useState("equipment");
+	const [allAccountables, setAllAccountables] = useState([]);
+	const [ticketItems, setTicketItems] = useState([]);
+	const [allAssignees, setAllAssignees] = useState([]);
+	const [allCustomerUsers, setAllCustomerUsers] = useState([]);
 	const [formData, setFormData] = useState({
 		description: "",
 		files: [],
@@ -75,10 +105,31 @@ const TicketDetails = () => {
 		description: false,
 		files: [],
 	});
+	const [selectedAccountable, setSelectedAccountable] = useState(ticket?.ticket_accountable.name || null);
+	const [selectedAssigned, setSelectedAssigned] = useState(ticket?.ticket_assignee.name || null);
+	const [selectedOwner, setSelectedOwner] = useState(ticket?.ticket_user.name || null);
+	const [itemTypeToAdd, setItemTypeToAdd] = useState("Labour");
+	const [itemsFormOpen, setItemsFormOpen] = useState(false);
+	const users = [
+		{ id: 1, name: "Alice Smith" },
+		{ id: 2, name: "Bob Johnson" },
+		{ id: 3, name: "Charlie Rose" },
+	];
 	const navigate = useNavigate();
 	const bottomRef = useRef(null);
 	const scrollContainerRef = useRef(null);
 	const editorRef = useRef();
+
+	const actionOptions = [
+		{ text: "Add Labour", icon: <ConstructionIcon fontSize="small" />, onClick: () => handleItemAdd("Labour") },
+		{ text: "Add Material", icon: <InventoryIcon fontSize="small" />, onClick: () => handleItemAdd("Material") },
+		{ text: "Add Expenses", icon: <PaidIcon fontSize="small" />, onClick: () => handleItemAdd("Expense") },
+	];
+
+	const handleItemAdd = (type) => {
+		setItemTypeToAdd(type);
+		setItemsFormOpen(true);
+	};
 
 	const scrollToBottom = () => {
 		if (scrollContainerRef.current) {
@@ -132,13 +183,108 @@ const TicketDetails = () => {
 			if (response.status) {
 				setTicket(response.data);
 				setTicketThreads(response?.data?.threads || null);
+				setSelectedAccountable(
+					{
+						id: response?.data?.ticket_accountable?.staff_id,
+						name: response?.data?.ticket_accountable?.name,
+					} || null
+				);
+				setSelectedAssigned(
+					{ id: response?.data?.ticket_assignee?.staff_id, name: response?.data?.ticket_assignee?.name } ||
+						null
+				);
+				setSelectedOwner(
+					{ id: response?.data?.ticket_user?.id, name: response?.data?.ticket_user?.name } || null
+				);
 				setLoading(false);
+
+				const tktItems = response.data.ticket_line_items.map((item) => ({
+					id: item.ticket_items.id,
+					quote: item.ticket_items.quote_id ? item.ticket_items.quote_id : "NA",
+					item_description: item.ticket_items.item_description,
+					added_by_staff: item.ticket_items.added_by_staff,
+					item_status: item.ticket_items.item_status,
+					item_value: item.ticket_items.item_value,
+					item_unit: item.ticket_items.item_unit,
+					item_name: item.name,
+					item_type: item.item_type.name,
+					item_number: item.item_number,
+					item_price: item.price,
+					item_subtotal: parseFloat(
+						parseFloat(item.price) * parseFloat(item.ticket_items.item_value)
+					).toFixed(2),
+					created: item.ticket_items.createdAt,
+				}));
+				console.log(tktItems);
+				setTicketItems(tktItems);
 			}
 		} catch (error) {
 			setLoading(false);
-
+			console.log(error);
 			setTicket(null);
-			setError("Failed to Fetch Equipment Details.");
+			setError("Failed to Fetch Ticket Details.");
+		}
+	};
+
+	useEffect(() => {
+		if (ticket) {
+			fetchCustomerUsers();
+			fetchAgents();
+		}
+	}, [ticket]);
+
+	const fetchAgents = async () => {
+		try {
+			const response = await fetchAgentsService();
+			if (response.status) {
+				const data = response.data;
+				const allUsers = data.map((user) => ({
+					id: user.staff_id,
+					name: user.name,
+				}));
+
+				// 2. Admins or Service Managers
+				const adminUsers = data
+					.filter((user) => user.staff_account?.isadmin || user.staff_account?.isservicemanager)
+					.map((user) => ({
+						id: user.staff_id,
+						name: user.name,
+					}));
+
+				setAllAccountables(adminUsers);
+				setAllAssignees(allUsers);
+			} else {
+				setLoading(false);
+				setTicket(null);
+				setError("Failed to Fetch Staff Details.");
+			}
+		} catch (error) {
+			setLoading(false);
+			setTicket(null);
+			setError("Failed to Fetch Staff Details.");
+		}
+	};
+
+	const fetchCustomerUsers = async () => {
+		try {
+			const response = await getCustomerUserByOrgIdService(ticket?.ticket_user.org_id);
+			if (response.status) {
+				const data = response.data;
+				const allUsers = data.map((user) => ({
+					id: user.id,
+					name: user.name,
+				}));
+
+				setAllCustomerUsers(allUsers);
+			} else {
+				setLoading(false);
+				setTicket(null);
+				setError("Failed to Fetch Staff Details.");
+			}
+		} catch (error) {
+			setLoading(false);
+			setTicket(null);
+			setError("Failed to Fetch Staff Details.");
 		}
 	};
 
@@ -162,15 +308,140 @@ const TicketDetails = () => {
 
 	const handleAssignClick = () => {};
 
-	const InfoRow = ({ label, value, chip, type = "text" }) => (
+	const saveAccountable = (user) => {
+		console.log("Saved Accountable", user);
+	};
+	const saveAssigned = (user) => {
+		console.log("Saved Assigned", user);
+	};
+
+	const saveOwner = (user) => {
+		console.log("Saved Owner", user);
+	};
+
+	const tktItemsColumns = [
+		{
+			field: "item_name",
+			headerName: "Item Name",
+			flex: 1,
+			renderCell: (params) => (
+				<Tooltip title="View Item">
+					<span
+						style={{
+							cursor: "pointer",
+							fontWeight: "bold",
+						}}>
+						{params.value}
+					</span>
+				</Tooltip>
+			),
+		},
+		{
+			field: "item_description",
+			headerName: "Description",
+			flex: 1.5,
+			renderCell: (params) =>
+				params.value ? (
+					<span>{params.value}</span>
+				) : (
+					<span style={{ fontSize: "12px", color: "gray" }}>N/A</span>
+				),
+		},
+		{
+			field: "item_number",
+			headerName: "Item #",
+			width: 130,
+			align: "center",
+			headerAlign: "center",
+		},
+		{
+			field: "item_type",
+			headerName: "Type",
+			width: 130,
+			align: "center",
+			headerAlign: "center",
+		},
+		{
+			field: "item_status",
+			headerName: "Status",
+			width: 130,
+			align: "center",
+			headerAlign: "center",
+			renderCell: (params) => (
+				<span style={{ color: params.value === "Pending" ? "orange" : "green", fontWeight: 500 }}>
+					{params.value}
+				</span>
+			),
+		},
+		{
+			field: "item_value",
+			headerName: "Qty",
+			width: 100,
+			align: "center",
+			headerAlign: "center",
+		},
+		{
+			field: "item_unit",
+			headerName: "Unit",
+			width: 100,
+			align: "center",
+			headerAlign: "center",
+		},
+		{
+			field: "item_price",
+			headerName: "Price",
+			width: 100,
+			align: "center",
+			headerAlign: "center",
+			renderCell: (params) =>
+				params.value ? `$${parseFloat(params.value).toFixed(2)}` : <span style={{ color: "gray" }}>N/A</span>,
+		},
+		{
+			field: "item_subtotal",
+			headerName: "Subtotal",
+			width: 120,
+			align: "center",
+			headerAlign: "center",
+			renderCell: (params) => `$${params.value}`,
+		},
+		{
+			field: "added_by_staff",
+			headerName: "Added By",
+			width: 160,
+			align: "center",
+			headerAlign: "center",
+		},
+		{
+			field: "quote",
+			headerName: "Quote ID",
+			width: 120,
+			align: "center",
+			headerAlign: "center",
+			renderCell: (params) =>
+				params.value === "NA" ? <span style={{ fontSize: "11px", color: "gray" }}>N/A</span> : params.value,
+		},
+		{
+			field: "created",
+			headerName: "Created At",
+			width: 180,
+			align: "center",
+			headerAlign: "center",
+			renderCell: (params) => formatDate(params.value),
+		},
+	];
+
+	const InfoRow = ({ label, value, chip, type = "text", onClick = null }) => (
 		<Box
 			display="flex"
 			justifyContent="flex-start"
-			alignItems={"flex-start"}
-			flexDirection={"column"}
+			alignItems="flex-start"
+			flexDirection="column"
 			rowGap={1}
-			mb={2}>
-			<Typography fontWeight={"bold"}>{label}</Typography>
+			mb={2}
+			{...(onClick && { onClick })}
+			sx={{ cursor: onClick ? "pointer" : "default" }} // Optional: Add visual cue
+		>
+			<Typography fontWeight="bold">{label}</Typography>
 			{type === "text" ? <Typography>{value || "-"}</Typography> : value}
 		</Box>
 	);
@@ -212,18 +483,13 @@ const TicketDetails = () => {
 								<ShoppingCartIcon />
 							</Button>
 						</Tooltip>
-						{/* <Tooltip title="Post a Reply">
-							<Button variant="contained" sx={{ minWidth: "40px", width: "40px" }}>
-								<ReplyIcon />
-							</Button>
-						</Tooltip>
-						<Tooltip title="Post Internal Note">
-							<Button variant="contained" sx={{ minWidth: "40px", width: "40px" }}>
-								<NoteAddIcon />
-							</Button>
-						</Tooltip> */}
+
 						<Tooltip title="Transfer Ticket">
-							<Button variant="contained" sx={{ minWidth: "40px", width: "40px" }}>
+							<Button
+								size="medium"
+								variant="contained"
+								onClick={() => setDeptFormOpen(true)}
+								sx={{ minWidth: "40px", width: "40px" }}>
 								<ShortcutIcon />
 							</Button>
 						</Tooltip>
@@ -267,7 +533,7 @@ const TicketDetails = () => {
 								},
 							]}
 						/>
-						<Button variant="contained" startIcon={<DeleteIcon />}>
+						<Button variant="contained" size="medium" startIcon={<DeleteIcon />}>
 							Delete
 						</Button>
 					</Box>
@@ -293,11 +559,6 @@ const TicketDetails = () => {
 								<Divider flexItem sx={{ mt: "10px", mb: "10px" }} />
 
 								<InfoRow
-									label="Status"
-									type="component"
-									value={<CustomChip text={ticket.ticket_status.name} />}
-								/>
-								<InfoRow
 									label="Customer"
 									type="text"
 									value={ticket?.ticket_user?.organization?.name || "NA"}
@@ -305,7 +566,16 @@ const TicketDetails = () => {
 								<InfoRow
 									label="Customer User"
 									type="component"
-									value={<UserName name={ticket?.ticket_user?.name || "-- No Owner --"} />}
+									value={
+										<>
+											<EditableAutocomplete
+												options={allCustomerUsers}
+												value={selectedOwner}
+												handleChange={(newUser) => setSelectedOwner(newUser)}
+												handleSubmit={saveOwner}
+											/>
+										</>
+									}
 								/>
 								<InfoRow
 									label="Customer Email"
@@ -319,13 +589,31 @@ const TicketDetails = () => {
 								<InfoRow
 									label="Accountable"
 									type="component"
-									value={<UserName name={ticket?.ticket_accountable?.name || "-- Unassigned --"} />}
+									value={
+										<>
+											<EditableAutocomplete
+												options={allAccountables}
+												value={selectedAccountable}
+												handleChange={(newUser) => setSelectedAccountable(newUser)}
+												handleSubmit={saveAccountable}
+											/>
+										</>
+									}
 								/>
 
 								<InfoRow
 									label="Assignee"
 									type="component"
-									value={<UserName name={ticket?.ticket_assignee?.name || "-- Unassigned --"} />}
+									value={
+										<>
+											<EditableAutocomplete
+												options={allAssignees}
+												value={selectedAssigned}
+												handleChange={(newUser) => setSelectedAssigned(newUser)}
+												handleSubmit={saveAssigned}
+											/>
+										</>
+									}
 								/>
 								<InfoRow
 									label="Equipment"
@@ -398,8 +686,8 @@ const TicketDetails = () => {
 										<Box
 											ref={scrollContainerRef}
 											sx={{
-												minHeight: "400px",
-												maxHeight: "400px",
+												minHeight: "600px",
+												maxHeight: "600px",
 												overflowY: "auto",
 												width: "100%",
 												p: 2,
@@ -556,7 +844,7 @@ const TicketDetails = () => {
 										<Box
 											display="flex"
 											flexDirection="row"
-											justifyContent="flex-start"
+											justifyContent="space-between"
 											alignItems="center"
 											width="100%">
 											<Box>
@@ -567,10 +855,31 @@ const TicketDetails = () => {
 													List of all the Ticket attachments
 												</Typography>
 											</Box>
+											<Box display="flex" alignItems="center" gap={1}>
+												<CustomButtonGroup
+													size="small"
+													iconOnly={false}
+													icon={<AddCircleIcon />}
+													buttonLabel="Item"
+													options={actionOptions}
+													variant="contained"
+													tooltipTitle="Add Ticket Items"
+												/>
+												<Button size="small" variant="contained" startIcon={<AddCircleIcon />}>
+													Quote
+												</Button>
+												<Button size="small" variant="contained" startIcon={<DeleteIcon />}>
+													Delete
+												</Button>
+											</Box>
 										</Box>
-										<Alert severity="info" sx={{ width: "100%", mt: 1 }}>
-											No Tickets for this Customer
-										</Alert>
+										{ticketItems.length > 0 ? (
+											<TicketLineItems items={ticketItems} />
+										) : (
+											<Alert severity="info" sx={{ width: "100%", mt: 1 }}>
+												No Ticket Items added
+											</Alert>
+										)}
 									</Box>
 								</TabPanel>
 								<TabPanel value={tabIndex} index={4}>
@@ -585,7 +894,7 @@ const TicketDetails = () => {
 										<Box
 											display="flex"
 											flexDirection="row"
-											justifyContent="flex-start"
+											justifyContent="space-between"
 											alignItems="center"
 											width="100%">
 											<Box>
@@ -596,9 +905,17 @@ const TicketDetails = () => {
 													List of all the Ticket attachments
 												</Typography>
 											</Box>
+											<Box display="flex" alignItems="center" gap={1}>
+												<Button size="small" variant="contained" startIcon={<AddCircleIcon />}>
+													Quote
+												</Button>
+												<Button size="small" variant="contained" startIcon={<DeleteIcon />}>
+													Delete
+												</Button>
+											</Box>
 										</Box>
 										<Alert severity="info" sx={{ width: "100%", mt: 1 }}>
-											No Tickets for this Customer
+											No Quotes for this Ticket
 										</Alert>
 									</Box>
 								</TabPanel>
@@ -614,7 +931,7 @@ const TicketDetails = () => {
 										<Box
 											display="flex"
 											flexDirection="row"
-											justifyContent="flex-start"
+											justifyContent="space-between"
 											alignItems="center"
 											width="100%">
 											<Box>
@@ -624,6 +941,17 @@ const TicketDetails = () => {
 												<Typography variant="body1" m={0}>
 													List of all the Ticket attachments
 												</Typography>
+											</Box>
+											<Box display="flex" alignItems="center" gap={1}>
+												<Button size="small" variant="contained" startIcon={<AddCircleIcon />}>
+													Report
+												</Button>
+												<Button size="small" variant="contained" startIcon={<AddCircleIcon />}>
+													Invoice
+												</Button>
+												<Button size="small" variant="contained" startIcon={<DeleteIcon />}>
+													Delete
+												</Button>
 											</Box>
 										</Box>
 										<Alert severity="info" sx={{ width: "100%", mt: 1 }}>
@@ -680,6 +1008,11 @@ const TicketDetails = () => {
 									</Typography>
 								</Box>
 								<Divider flexItem sx={{ mt: "10px", mb: "10px" }} />
+								<InfoRow
+									label="Status"
+									type="component"
+									value={<CustomChip text={ticket.ticket_status.name} />}
+								/>
 								<InfoRow label="Priority" value={ticket?.ticket_priority.priority_desc || "N/A"} />
 								<InfoRow label="Department" value={ticket?.ticket_department.name || "N/A"} />
 								<InfoRow
@@ -707,6 +1040,19 @@ const TicketDetails = () => {
 					</Box>
 				</Box>
 			</Box>
+
+			{deptFormOpen && (
+				<TicketDepartmentTransferForm ticket={ticket} open={deptFormOpen} setOpen={setDeptFormOpen} />
+			)}
+
+			<Drawer anchor={"right"} sx={{ width: "45vw" }} open={itemsFormOpen}>
+				<TicketItemsForm
+					formOpen={itemsFormOpen}
+					setFormOpen={setItemsFormOpen}
+					setParentData={setTicketItems}
+					selectedType={itemTypeToAdd}
+				/>
+			</Drawer>
 		</>
 	);
 };

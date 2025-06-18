@@ -9,6 +9,7 @@ export const deleteCustomersService = (ids) => handleRequest("post", "/organizat
 // Customer Users
 export const fetchCustomerUsersService = () => handleRequest("get", "/users/list");
 export const getCustomerUserByIdService = (id) => handleRequest("post", "/users/by-id", { user_id: id });
+export const getCustomerUserByOrgIdService = (id) => handleRequest("post", "/users/by-org-id", { org_id: id });
 export const createCustomerUsersService = (formData) => handleRequest("post", "/users/create", formData);
 export const deleteCustomerUsersService = (ids) => handleRequest("post", "/users/delete", { user_ids: ids });
 

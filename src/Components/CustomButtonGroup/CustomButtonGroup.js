@@ -1,7 +1,15 @@
 import { Button, ButtonGroup, ListItemIcon, ListItemText, Menu, MenuItem, Tooltip } from "@mui/material";
 import React, { useRef, useState } from "react";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
-const CustomButtonGroup = ({ iconOnly = false, icon, buttonLabel, options, variant = "contained", tooltipTitle }) => {
+const CustomButtonGroup = ({
+	iconOnly = false,
+	icon,
+	buttonLabel,
+	options,
+	variant = "contained",
+	tooltipTitle,
+	size = "medium",
+}) => {
 	const [open, setOpen] = useState(false);
 	const anchorRef = useRef(null);
 
@@ -20,10 +28,18 @@ const CustomButtonGroup = ({ iconOnly = false, icon, buttonLabel, options, varia
 		<>
 			<Tooltip title={tooltipTitle}>
 				<ButtonGroup variant={variant} ref={anchorRef} aria-label="More actions" sx={{ borderRadius: "20px" }}>
-					<Button onClick={handleToggle} sx={{ minWidth: "40px", width: "40px" }}>
+					<Button
+						size={size}
+						onClick={handleToggle}
+						startIcon={iconOnly ? null : icon}
+						sx={{
+							...(iconOnly && { minWidth: "40px", width: "40px" }),
+						}}>
 						{iconOnly ? icon : buttonLabel}
 					</Button>
+
 					<Button
+						size={size}
 						aria-controls={open ? "split-button-menu" : undefined}
 						aria-expanded={open ? "true" : undefined}
 						aria-label="select action"
@@ -52,7 +68,12 @@ const CustomButtonGroup = ({ iconOnly = false, icon, buttonLabel, options, varia
 					},
 				}}>
 				{options.map((option, index) => (
-					<MenuItem key={option.text} onClick={option.onClick}>
+					<MenuItem
+						key={option.text}
+						onClick={(e) => {
+							handleClose(e);
+							option.onClick && option.onClick(); // Call the function if it exists
+						}}>
 						<ListItemIcon>{option.icon}</ListItemIcon>
 						<ListItemText>{option.text}</ListItemText>
 					</MenuItem>
