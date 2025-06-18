@@ -28,6 +28,8 @@ import ProvisionDetails from "../../Pages/ProvisionDetails/ProvisionDetails";
 import CustomerDetails from "../../Pages/CustomerDetails/CustomerDetails";
 import NewTicket from "../../Pages/NewTicket/NewTicket";
 import NewTicketForm from "../../Pages/NewTicketForm/NewTicketForm";
+import Dashboard from "../../Pages/Dashboard/Dashboard";
+import TicketDetails from "../../Pages/TicketDetails/TicketDetails";
 const HorizontalLayout = () => {
 	const { userMode } = useAuth();
 	const { flexCol, flexRow } = useCustomTheme();
@@ -125,6 +127,7 @@ const HorizontalLayout = () => {
 										<Route key={path} path={path} element={component} />
 									))} */}
 										<Route path="/home" element={<Home />} />
+										<Route path="/dashboard" element={<Dashboard />} />
 										<Route path="/settings" element={<ThemeCustomizer />} />
 										<Route path="/profile" element={<Profile />} />
 										<Route path="/customers" element={<Customers />} />
@@ -137,6 +140,7 @@ const HorizontalLayout = () => {
 										<Route path="/equipments/:eq_id" element={<EquipmentDetails />} />
 										<Route path="/staff" element={<Agents />} />
 										<Route path="/tickets" element={<Tickets />} />
+										<Route path="/tickets/:ticket_id" element={<TicketDetails />} />
 										<Route path="/tickets/new-ticket" element={<NewTicket />} />
 										<Route path="/tickets/new-ticket-v2" element={<NewTicketForm />} />
 										<Route path="/users" element={<CustomerUsers />} />

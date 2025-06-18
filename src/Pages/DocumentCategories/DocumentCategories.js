@@ -138,6 +138,7 @@ const DocumentCategories = () => {
 		<EntityWrapper
 			title={"Document Categories"}
 			subtitle={"List of all the Document Categories"}
+			activeKey={"document-categories"}
 			listLoading={loading}
 			data={categories}
 			setData={setCategories}

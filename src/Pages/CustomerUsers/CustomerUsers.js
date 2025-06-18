@@ -131,6 +131,7 @@ const CustomerUsers = () => {
 		<EntityWrapper
 			title={"Customer Users"}
 			subtitle={"List of Users for the customers"}
+			activeKey={"users"}
 			data={customerUsers}
 			setData={setCustomerUsers}
 			columns={columns}

@@ -129,6 +129,7 @@ const Agents = () => {
 	useEffect(() => {
 		setActiveTitle({
 			title: "Agents",
+			activeKey: "staff",
 			subtitle: "List of all the Agents",
 		});
 		fetchAgents();

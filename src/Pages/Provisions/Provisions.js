@@ -190,6 +190,7 @@ const Provisions = () => {
 			<EntityWrapper
 				title={"Provisions"}
 				subtitle={"List of all the Provisions"}
+				activeKey={"provisions"}
 				data={provisions}
 				setData={setProvisions}
 				columns={columns}

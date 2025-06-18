@@ -19,6 +19,7 @@ const EntityWrapper = ({ ...props }) => {
 		setActiveTitle({
 			title: props.title,
 			subtitle: props.subtitle,
+			activeKey: props?.activeKey || null,
 		});
 		setDatagridRows(props.data);
 	}, []);

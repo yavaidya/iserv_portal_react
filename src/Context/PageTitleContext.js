@@ -7,6 +7,7 @@ export const PageTitleProvider = ({ children }) => {
 	const [activeTitle, setActiveTitle] = useState({
 		title: "Dashboard",
 		subtitle: "Welcome to the dashboard",
+		activeKey: "dashboard",
 	});
 
 	return <PageTitleContext.Provider value={{ activeTitle, setActiveTitle }}>{children}</PageTitleContext.Provider>;

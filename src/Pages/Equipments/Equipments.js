@@ -242,6 +242,7 @@ const Equipments = () => {
 			<EntityWrapper
 				title={"Equipments"}
 				subtitle={"List of all the Equipments"}
+				activeKey={"equipments"}
 				data={equipments}
 				setData={setEquipments}
 				columns={columns}

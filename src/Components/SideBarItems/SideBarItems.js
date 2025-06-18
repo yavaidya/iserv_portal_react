@@ -1,7 +1,7 @@
 import { Box, Typography, Tooltip, Divider, alpha } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCustomTheme } from "../../Context/ThemeContext";
 import { useNavigate } from "react-router-dom";
 import { usePageTitle } from "../../Context/PageTitleContext";
@@ -23,9 +23,17 @@ const SideBarItems = ({ menuItems, sideBarCollapsed }) => {
 		}
 	};
 
+	useEffect(() => {
+		console.log("Active Title: ", activeTitle);
+	}, [activeTitle]);
+
 	const renderMenuItem = (item) => {
 		const hasChildren = item.children?.length > 0;
 		const isOpen = openMenu[item.title] || false;
+
+		if (item.visible === false) {
+			return null;
+		}
 
 		return (
 			<Box key={item.title} width="100%" my={1}>
@@ -40,11 +48,11 @@ const SideBarItems = ({ menuItems, sideBarCollapsed }) => {
 							width: "100%",
 							borderRadius: 1,
 							color:
-								activeTitle.path === item.path && activeTitle.title === item.title
+								activeTitle.activeKey === item.activeKey
 									? (theme) => theme.palette.primary.main
 									: "text.secondary",
 							backgroundColor:
-								activeTitle.path === item.path && activeTitle.title === item.title
+								activeTitle.activeKey === item.activeKey
 									? (theme) => alpha(theme.palette.primary.light, 0.2)
 									: "transparent",
 							"&:hover": {
@@ -69,56 +77,63 @@ const SideBarItems = ({ menuItems, sideBarCollapsed }) => {
 
 				{hasChildren && isOpen && (
 					<Box sx={{ pl: 2, width: "100%", borderRadius: 1 }}>
-						{item.children.map((child) => (
-							<Tooltip title={child.title} key={child.title} placement="right" arrow disableInteractive>
-								<Box
-									sx={{
-										...flexRow,
-										padding: sideBarCollapsed ? "10px" : "8px 15px",
-										columnGap: "12px",
-										alignItems: "center",
-										cursor: "pointer",
-										width: "100%",
-										borderRadius: 1,
-										color:
-											activeTitle.path === child.path && activeTitle.title === child.title
-												? (theme) => theme.palette.primary.main
-												: "text.secondary",
-										backgroundColor:
-											activeTitle.path === child.path && activeTitle.title === child.title
-												? (theme) => alpha(theme.palette.primary.light, 0.2)
-												: "transparent",
-										"&:hover": {
-											backgroundColor: (theme) => alpha(theme.palette.primary.light, 0.2),
-											color: (theme) => theme.palette.primary.main,
-										},
-									}}
-									onClick={() => navigateToPath(child)}>
-									{child.icon && (
-										<Box
-											sx={{
-												...flexCol,
-												justifyContent: "center",
-												color: "inherit",
-												fontSize: "14px",
-											}}>
-											{child.icon}
-										</Box>
-									)}
-									{!sideBarCollapsed && (
-										<Typography
-											variant="body1"
-											sx={{
-												fontSize: "12px",
-												color: "inherit",
-												fontWeight: "bold",
-											}}>
-											{child.title}
-										</Typography>
-									)}
-								</Box>
-							</Tooltip>
-						))}
+						{item.children
+							.filter((child) => child.visible !== false)
+							.map((child) => (
+								<Tooltip
+									title={child.title}
+									key={child.title}
+									placement="right"
+									arrow
+									disableInteractive>
+									<Box
+										sx={{
+											...flexRow,
+											padding: sideBarCollapsed ? "10px" : "8px 15px",
+											columnGap: "12px",
+											alignItems: "center",
+											cursor: "pointer",
+											width: "100%",
+											borderRadius: 1,
+											color:
+												activeTitle.activeKey === child.activeKey
+													? (theme) => theme.palette.primary.main
+													: "text.secondary",
+											backgroundColor:
+												activeTitle.activeKey === child.activeKey
+													? (theme) => alpha(theme.palette.primary.light, 0.2)
+													: "transparent",
+											"&:hover": {
+												backgroundColor: (theme) => alpha(theme.palette.primary.light, 0.2),
+												color: (theme) => theme.palette.primary.main,
+											},
+										}}
+										onClick={() => navigateToPath(child)}>
+										{child.icon && (
+											<Box
+												sx={{
+													...flexCol,
+													justifyContent: "center",
+													color: "inherit",
+													fontSize: "14px",
+												}}>
+												{child.icon}
+											</Box>
+										)}
+										{!sideBarCollapsed && (
+											<Typography
+												variant="body1"
+												sx={{
+													fontSize: "12px",
+													color: "inherit",
+													fontWeight: "bold",
+												}}>
+												{child.title}
+											</Typography>
+										)}
+									</Box>
+								</Tooltip>
+							))}
 					</Box>
 				)}
 			</Box>
@@ -144,7 +159,7 @@ const SideBarItems = ({ menuItems, sideBarCollapsed }) => {
 								{blockTitle}
 							</Typography>
 						)}
-						{items.map(renderMenuItem)}
+						{items.filter((item) => item.visible).map(renderMenuItem)}
 						{!isLast && <Divider flexItem sx={{ margin: sideBarCollapsed ? "10px 0" : "5px 10px" }} />}
 					</Box>
 				);

@@ -40,6 +40,7 @@ import PageHeader from "../PageHeader/PageHeader";
 import CloseIcon from "@mui/icons-material/Close";
 import _ from "lodash";
 import FileDropZone from "../FileDropZone/FileDropZone";
+import { createTicketsService } from "../../Services/ticketsService";
 
 const NewTicketFormV2 = ({ formOpen, setFormOpen, setParentData, fetchParentData }) => {
 	const { setActiveTitle } = usePageTitle();
@@ -50,6 +51,7 @@ const NewTicketFormV2 = ({ formOpen, setFormOpen, setParentData, fetchParentData
 	const [userOptions, setUserOptions] = useState([]);
 	const [equipmentOptions, setEquipmentOptions] = useState([]);
 	const [agentOptions, setAgentOptions] = useState([]);
+	const [serviceManagerOptions, setServiceManagerOptions] = useState([]);
 	const [allUsers, setAllUsers] = useState([]);
 	const [allCustomers, setAllCustomers] = useState([]);
 	const [alert, setAlert] = useState(null);
@@ -68,7 +70,8 @@ const NewTicketFormV2 = ({ formOpen, setFormOpen, setParentData, fetchParentData
 		ticket_notice: "all",
 		priority: "normal",
 		attachment: null,
-		staff: null,
+		staff_accountable: null,
+		staff_assigned: null,
 		sla: "",
 		equipment: "",
 		ticket_source: "web",
@@ -79,6 +82,7 @@ const NewTicketFormV2 = ({ formOpen, setFormOpen, setParentData, fetchParentData
 	const [formErrors, setFormErrors] = useState({});
 	const [disabledAll, setDisabledAll] = useState(true);
 	const initialFormDataRef = useRef();
+	const editorRef = useRef();
 
 	useEffect(() => {
 		if (formOpen) {
@@ -222,6 +226,18 @@ const NewTicketFormV2 = ({ formOpen, setFormOpen, setParentData, fetchParentData
 				}));
 				console.log(agentUserCounts);
 				setAgentOptions(agentUserCounts);
+
+				const serviceManagerUserCounts = response.data
+					.filter(
+						(item) => item.staff_account.isadmin === true || item.staff_account.isservicemanager === true
+					)
+					.map((agent) => ({
+						value: agent.staff_id,
+						label: agent.name,
+					}));
+				console.log(serviceManagerUserCounts);
+
+				setServiceManagerOptions(serviceManagerUserCounts);
 			} else {
 				setError("Failed Fetching Agents");
 				setAgentOptions([]);
@@ -263,7 +279,8 @@ const NewTicketFormV2 = ({ formOpen, setFormOpen, setParentData, fetchParentData
 				ticket_notice: "all",
 				priority: "normal",
 				attachment: null,
-				staff: null,
+				staff_accountable: null,
+				staff_assigned: null,
 				sla: "",
 				equipment: "",
 				ticket_source: "web",
@@ -292,7 +309,8 @@ const NewTicketFormV2 = ({ formOpen, setFormOpen, setParentData, fetchParentData
 					ticket_notice: "all",
 					priority: "normal",
 					attachment: null,
-					staff: null,
+					staff_accountable: null,
+					staff_assigned: null,
 					sla: "",
 					equipment: "",
 					ticket_source: "web",
@@ -371,38 +389,42 @@ const NewTicketFormV2 = ({ formOpen, setFormOpen, setParentData, fetchParentData
 		setFormErrors({});
 		setAlert(""); // clear previous alerts if any
 		console.log("Form submitted:", formData);
+		const req_body = {
+			formData: formData,
+		};
 		setFormSubmitting(true);
-		// const response = await createTicket(req_body);
-		// if (response.status) {
-		if (fetchParentData) {
-			await fetchParentData();
-		}
-		setFormOpen(false);
-		setFormData({
-			customer: null,
-			user: null,
-			equipment: null,
-			subject: "",
-			description: "",
-			ticket_notice: "all",
-			priority: "normal",
-			attachment: null,
-			staff: null,
-			sla: "",
-			equipment: "",
-			ticket_source: "web",
-			department: "maintenance",
-			service_type: "installation",
-			due_date: moment().add(7, "days"),
-		});
-		setTimeout(() => {
+		const response = await createTicketsService(req_body);
+		if (response.status) {
+			if (fetchParentData) {
+				await fetchParentData();
+			}
+			setFormOpen(false);
+			setFormData({
+				customer: null,
+				user: null,
+				equipment: null,
+				subject: "",
+				description: "",
+				ticket_notice: "all",
+				priority: "normal",
+				attachment: null,
+				staff_accountable: null,
+				staff_assigned: null,
+				sla: "",
+				equipment: "",
+				ticket_source: "web",
+				department: "maintenance",
+				service_type: "installation",
+				due_date: moment().add(7, "days"),
+			});
+			setTimeout(() => {
+				setFormSubmitting(false);
+			}, 1500);
+		} else {
+			setAlert(response.message);
+			setFormLoading(false);
 			setFormSubmitting(false);
-		}, 1500);
-		// } else {
-		// 	setAlert(response.message);
-		// 	setFormLoading(false);
-		// 	setFormSubmitting(false);
-		// }
+		}
 	};
 
 	// if (loading) {
@@ -571,15 +593,25 @@ const NewTicketFormV2 = ({ formOpen, setFormOpen, setParentData, fetchParentData
 
 					<FormField
 						type="autocomplete"
-						label="Service Engineer / Team"
-						name="staff"
-						value={formData.staff}
-						error={formErrors.staff}
+						label="Accountable"
+						name="staff_accountable"
+						value={formData.staff_accountable}
+						error={formErrors.staff_accountable}
+						onChange={handleFormChange}
+						options={serviceManagerOptions}
+						showRequired={false}
+					/>
+
+					<FormField
+						type="autocomplete"
+						label="Assignee"
+						name="staff_assigned"
+						value={formData.staff_assigned}
+						error={formErrors.staff_assigned}
 						onChange={handleFormChange}
 						options={agentOptions}
 						showRequired={false}
 					/>
-
 					<FormField
 						type="select"
 						label="Department"
@@ -639,7 +671,11 @@ const NewTicketFormV2 = ({ formOpen, setFormOpen, setParentData, fetchParentData
 							</Typography>
 						</Box>
 						<Box sx={{ width: "100%" }}>
-							<RichTextEditor value={formData.description} onChange={handleEditorChange} />
+							<RichTextEditor
+								ref={editorRef}
+								value={formData.description}
+								onChange={handleEditorChange}
+							/>
 							{formErrors.description && (
 								<Typography color="error" variant="body1" fontSize="12px" mt={1}>
 									Description is required

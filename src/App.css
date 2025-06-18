@@ -92,6 +92,14 @@ div:where(.swal2-container) div:where(.swal2-actions):not(.swal2-loading) .swal2
     background-image: linear-gradient(var(--primary-main), var(--primary-main));
 }
 
+/* .jodit-ui-tooltip, .jodit-tooltip, .jodit-ui-popup {
+	position: fixed !important;
+	z-index: 9999 !important;
+	pointer-events: none;
+	max-height: 0px;
+	overflow: hidden;
+} */
+
 /* div:where(.swal2-icon) .swal2-icon-content {
     display: flex;
     align-items: center;

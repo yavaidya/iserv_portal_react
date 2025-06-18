@@ -1,6 +1,19 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import loginService from "../Services/authService";
 import { useLocation, useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
+
+const isTokenExpired = (token) => {
+	if (!token) return true;
+	try {
+		const decodedToken = jwtDecode(token);
+		const currentTime = Date.now() / 1000;
+		return decodedToken.exp < currentTime;
+	} catch (error) {
+		console.error("Error decoding token:", error);
+		return true;
+	}
+};
 
 // Create the context
 const AuthContext = createContext();
@@ -23,7 +36,13 @@ export const AuthProvider = ({ children }) => {
 		}
 		const userSavedToken = localStorage.getItem("token");
 		if (userSavedToken) {
-			setUserToken(userSavedToken);
+			if (isTokenExpired(userSavedToken)) {
+				console.log("Token Expired");
+				setIsAuthenticated(false);
+			} else {
+				console.log("Token Valid");
+				setUserToken(userSavedToken);
+			}
 		}
 		const storedUser = localStorage.getItem("authUser");
 		if (storedUser) {
@@ -84,7 +103,6 @@ export const AuthProvider = ({ children }) => {
 					}
 					setUser(response.data);
 					setUserToken(response.token);
-					localStorage.setItem("token", response.token);
 					setUserMode(response.mode);
 					setTimeout(() => {
 						setLoading(false);

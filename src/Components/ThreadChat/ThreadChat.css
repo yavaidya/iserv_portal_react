@@ -1,0 +1,7 @@
+.thread-html p {
+	margin: 0;
+}
+.thread-html * {
+	margin: 0;
+	padding: 0;
+}

@@ -6,7 +6,7 @@ const Dashboard = () => {
 	useEffect(() => {
 		setActiveTitle({
 			title: "Dashboard",
-			path: "/dashboard",
+			activeKey: "dashboard",
 			subtitle: "Manage your service tickets efficiently",
 		});
 	}, []);

@@ -153,6 +153,7 @@ const Documents = () => {
 		<EntityWrapper
 			title={"Documents"}
 			subtitle={"List of all the Documents"}
+			activeKey={"documents"}
 			data={documents}
 			setData={setDocuments}
 			columns={columns}

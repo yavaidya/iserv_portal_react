@@ -17,6 +17,7 @@ import LoadingWrapper from "../../Components/LoadingWrapper/LoadingWrapper";
 import ErrorAlertWrapper from "../../Components/ErrorAlertWrapper/ErrorAlertWrapper";
 import KanbanBoardComponent from "../../Components/KanbanBoard/KanbanBoard";
 import CreateCustomView from "../../Components/CreateCustomView/CreateCustomView";
+import { useNavigate } from "react-router-dom";
 
 const Tickets = () => {
 	const { setActiveTitle } = usePageTitle();
@@ -28,6 +29,7 @@ const Tickets = () => {
 	const [loading, setLoading] = useState(true);
 	const [formOpen, setFormOpen] = useState(false);
 	const [viewModalOpen, setViewModalOpen] = useState(false);
+	const navigate = useNavigate();
 	const columns = [
 		{
 			field: "number",
@@ -154,6 +156,7 @@ const Tickets = () => {
 		setActiveTitle({
 			title: "Tickets",
 			subtitle: "List of all the Tickets",
+			activeKey: "tickets",
 		});
 		fetchTickets();
 	}, []);
@@ -205,6 +208,7 @@ const Tickets = () => {
 
 	const handleRowClick = (params) => {
 		console.log("Row clicked:", params.row);
+		navigate(`/tickets/${params.row.id}`);
 	};
 
 	const handleTabChange = (newValue) => {
